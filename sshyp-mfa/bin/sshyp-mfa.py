@@ -5,8 +5,8 @@ from hmac import new as new_mac
 from os import environ, path, system, uname
 from pathlib import Path
 from shutil import rmtree
-from sshyp import decrypt, entry_list_gen, shm_gen
 from sshync import get_profile
+from sshyp import decrypt, entry_list_gen, shm_gen
 from steam.guard import generate_twofactor_code as steam_totp
 from struct import pack, unpack
 from sys import argv, exit as s_exit
