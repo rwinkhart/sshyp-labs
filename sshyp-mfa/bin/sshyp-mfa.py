@@ -1,0 +1,76 @@
+#!/bin/python3
+
+from base64 import b32decode
+from hmac import new as new_mac
+from os import environ, path, system, uname
+from pathlib import Path
+from shutil import rmtree
+from sshyp import decrypt, entry_list_gen, shm_gen
+from sshync import get_profile
+from steam.guard import generate_twofactor_code as steam_totp
+from struct import pack, unpack
+from sys import argv, exit as s_exit
+from time import sleep, time
+
+
+def totp(_secret, _algo, _digits, _period):
+    _secret = b32decode(_secret.upper() + '=' * ((8 - len(_secret)) % 8))
+    _counter = pack('>Q', int(time() / _period))
+    _mac = new_mac(_secret, _counter, _algo).digest()
+    _offset = _mac[-1] & 0x0f
+    _binary = unpack('>L', _mac[_offset:_offset + 4])[0] & 0x7fffffff
+    return str(_binary)[-_digits:].zfill(_digits)
+
+
+def mfa_read_shortcut():
+    if not Path(f"{directory}{argument_list[1].replace('/', '', 1)}.gpg").exists():
+        print(f"\n\u001b[38;5;9merror: entry ({argument_list[1].replace('/', '', 1)}) does not exist\u001b[0m\n")
+        s_exit(1)
+    _shm_folder, _shm_entry = shm_gen()
+    decrypt(directory + argument_list[1].replace('/', '', 1), _shm_folder, _shm_entry, gpg)
+    _mfa_data = open(f"{path.expanduser('~/.config/sshyp/tmp/')}{_shm_folder}/{_shm_entry}", 'r').readlines()
+    _type = _mfa_data[4].split('otpauth://')[1].split('/')[0]
+    _secret = _mfa_data[4].split('?secret=')[1].split('&issuer=')[0]
+    _algo = _mfa_data[4].split('&algorithm=')[1].split('&digits=')[0]
+    _digits = int(_mfa_data[4].split('&digits=')[1].split('&period=')[0])
+    _period = int(_mfa_data[4].split('&period=')[1])
+    rmtree(f"{path.expanduser('~/.config/sshyp/tmp/')}{_shm_folder}")
+    return _type, _secret, _algo, _digits, _period
+
+
+if __name__ == '__main__':
+    # argument fetcher
+    argument_list = argv
+
+    # user data fetcher
+    ssh_info = get_profile(path.expanduser('~/.config/sshyp/sshyp.sshync'))
+    directory = str(ssh_info[3].replace('\n', ''))
+    if uname()[0] == 'Haiku':  # set proper gpg command for OS
+        gpg = 'gpg --pinentry-mode loopback'
+    else:
+        gpg = 'gpg'
+
+    try:
+        if len(argument_list) == 1:
+            entry_list_gen()
+            argument_list.append(input('entry to read: '))
+        mfa_data = mfa_read_shortcut()
+        print('\nmfa key copied to clipboard\n\nuntil this process is closed, your clipboard will be automatically '
+              'updated with the newest mfa key')
+        while True:
+            sleep(1)
+            if mfa_data[0] == 'steam':
+                _mfa_key = steam_totp(b32decode(mfa_data[1]))
+            else:
+                _mfa_key = totp(mfa_data[1], mfa_data[2], mfa_data[3], mfa_data[4])
+            if uname()[0] == 'Haiku':  # Haiku clipboard detection
+                system(f"clipboard -c '{_mfa_key}'")
+            elif Path("/data/data/com.termux").exists():  # Termux (Android) clipboard detection
+                system(f"termux-clipboard-set '{_mfa_key}'")
+            elif environ.get('WAYLAND_DISPLAY') == 'wayland-0':  # Wayland clipboard detection
+                system(f"wl-copy '{_mfa_key}'")
+            else:  # X11 clipboard detection
+                system(f"echo -n '{_mfa_key}' | xclip -sel c")
+    except KeyboardInterrupt:
+        print('\n')
+        s_exit()
