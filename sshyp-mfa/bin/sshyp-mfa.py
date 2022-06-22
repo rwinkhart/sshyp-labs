@@ -10,7 +10,7 @@ from sshyp import decrypt, entry_list_gen, shm_gen
 from steam.guard import generate_twofactor_code as steam_totp
 from struct import pack, unpack
 from sys import argv, exit as s_exit
-from time import sleep, time
+from time import sleep, strftime, time
 
 
 def totp(_secret, _algo, _digits, _period):
@@ -59,18 +59,19 @@ if __name__ == '__main__':
               'updated with the newest mfa key')
         while True:
             sleep(1)
-            if mfa_data[0] == 'steam':
-                _mfa_key = steam_totp(b32decode(mfa_data[1]))
-            else:
-                _mfa_key = totp(mfa_data[1], mfa_data[2], mfa_data[3], mfa_data[4])
-            if uname()[0] == 'Haiku':  # Haiku clipboard detection
-                system(f"clipboard -c '{_mfa_key}'")
-            elif Path("/data/data/com.termux").exists():  # Termux (Android) clipboard detection
-                system(f"termux-clipboard-set '{_mfa_key}'")
-            elif environ.get('WAYLAND_DISPLAY') == 'wayland-0':  # Wayland clipboard detection
-                system(f"wl-copy '{_mfa_key}'")
-            else:  # X11 clipboard detection
-                system(f"echo -n '{_mfa_key}' | xclip -sel c")
+            if str(int(strftime('%S'))/15).endswith('.0'):
+                if mfa_data[0] == 'steam':
+                    _mfa_key = steam_totp(b32decode(mfa_data[1]))
+                else:
+                    _mfa_key = totp(mfa_data[1], mfa_data[2], mfa_data[3], mfa_data[4])
+                if uname()[0] == 'Haiku':  # Haiku clipboard detection
+                    system(f"clipboard -c '{_mfa_key}'")
+                elif Path("/data/data/com.termux").exists():  # Termux (Android) clipboard detection
+                    system(f"termux-clipboard-set '{_mfa_key}'")
+                elif environ.get('WAYLAND_DISPLAY') == 'wayland-0':  # Wayland clipboard detection
+                    system(f"wl-copy '{_mfa_key}'")
+                else:  # X11 clipboard detection
+                    system(f"echo -n '{_mfa_key}' | xclip -sel c")
     except KeyboardInterrupt:
         print('\n')
         s_exit()
