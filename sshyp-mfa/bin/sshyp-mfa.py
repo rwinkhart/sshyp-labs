@@ -50,16 +50,19 @@ if __name__ == '__main__':
     else:
         gpg = 'gpg'
 
+    # main process
     try:
+
         if len(argument_list) == 1:
             entry_list_gen()
             argument_list.append(input('entry to read: '))
-        mfa_data = mfa_read_shortcut()
+        mfa_data, copied = mfa_read_shortcut(), None
         print('\nmfa key copied to clipboard\n\nuntil this process is closed, your clipboard will be automatically '
               'updated with the newest mfa key')
         while True:
-            sleep(1)
-            if str(int(strftime('%S'))/15).endswith('.0'):
+            if str(int(strftime('%S'))/15).endswith('.0') or copied is None:
+                if copied is None:
+                    copied = 1
                 if mfa_data[0] == 'steam':
                     _mfa_key = steam_totp(b32decode(mfa_data[1]))
                 else:
@@ -72,6 +75,8 @@ if __name__ == '__main__':
                     system(f"wl-copy '{_mfa_key}'")
                 else:  # X11 clipboard detection
                     system(f"echo -n '{_mfa_key}' | xclip -sel c")
+                sleep(1)
+
     except KeyboardInterrupt:
         print('\n')
         s_exit()
