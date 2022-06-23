@@ -59,7 +59,7 @@ if __name__ == '__main__':
         print('\nmfa key copied to clipboard\n\nuntil this process is closed, your clipboard will be automatically '
               'updated with the newest mfa key')
         while True:
-            if str(int(strftime('%S'))/15).endswith('.0') or copied is None:
+            if str(int(strftime('%S'))/mfa_data[4]).endswith('.0') or copied is None:
                 if copied is None:
                     copied = 1
                 if mfa_data[0] == 'steam':
