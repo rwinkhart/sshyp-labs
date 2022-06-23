@@ -13,7 +13,7 @@ from sys import argv, exit as s_exit
 from time import sleep, strftime, time
 
 
-def totp(_secret, _algo, _digits, _period):
+def totp(_secret, _algo, _digits, _period):  # uses provided information to generate a standard totp key
     _secret = b32decode(_secret.upper() + '=' * ((8 - len(_secret)) % 8))
     _counter = pack('>Q', int(time() / _period))
     _mac = new_mac(_secret, _counter, _algo).digest()
@@ -22,7 +22,7 @@ def totp(_secret, _algo, _digits, _period):
     return str(_binary)[-_digits:].zfill(_digits)
 
 
-def mfa_read_shortcut():
+def mfa_read_shortcut():  # reads and extracts MFA info from the user-specified sshyp entry
     if not Path(f"{directory}{argument_list[1].replace('/', '', 1)}.gpg").exists():
         print(f"\n\u001b[38;5;9merror: entry ({argument_list[1].replace('/', '', 1)}) does not exist\u001b[0m\n")
         s_exit(1)
@@ -50,9 +50,8 @@ if __name__ == '__main__':
     else:
         gpg = 'gpg'
 
-    # main process
+    # main process; runs functions to generate MFA key, then continuously copies up-to-date MFA key to clipboard
     try:
-
         if len(argument_list) == 1:
             entry_list_gen()
             argument_list.append(input('entry to read: '))
@@ -76,7 +75,6 @@ if __name__ == '__main__':
                 else:  # X11 clipboard detection
                     system(f"echo -n '{_mfa_key}' | xclip -sel c")
                 sleep(1)
-
     except KeyboardInterrupt:
         print('\n')
         s_exit()
