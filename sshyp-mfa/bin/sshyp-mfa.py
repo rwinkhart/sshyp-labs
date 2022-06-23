@@ -74,7 +74,7 @@ if __name__ == '__main__':
                     system(f"wl-copy '{_mfa_key}'")
                 else:  # X11 clipboard detection
                     system(f"echo -n '{_mfa_key}' | xclip -sel c")
-                sleep(1)
+            sleep(1)
     except KeyboardInterrupt:
         print('\n')
         s_exit()
