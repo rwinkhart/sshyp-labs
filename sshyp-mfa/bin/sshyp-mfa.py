@@ -28,14 +28,19 @@ def mfa_read_shortcut():  # reads and extracts MFA info from the user-specified 
         s_exit(1)
     _shm_folder, _shm_entry = shm_gen()
     decrypt(directory + argument_list[1].replace('/', '', 1), _shm_folder, _shm_entry, gpg)
-    _mfa_data = open(f"{path.expanduser('~/.config/sshyp/tmp/')}{_shm_folder}/{_shm_entry}", 'r').readlines()
-    _type = _mfa_data[4].split('otpauth://')[1].split('/')[0]
-    _secret = _mfa_data[4].split('?secret=')[1].split('&issuer=')[0]
-    _algo = _mfa_data[4].split('&algorithm=')[1].split('&digits=')[0]
-    _digits = int(_mfa_data[4].split('&digits=')[1].split('&period=')[0])
-    _period = int(_mfa_data[4].split('&period=')[1])
-    rmtree(f"{path.expanduser('~/.config/sshyp/tmp/')}{_shm_folder}")
-    return _type, _secret, _algo, _digits, _period
+    try:
+        _mfa_data = open(f"{path.expanduser('~/.config/sshyp/tmp/')}{_shm_folder}/{_shm_entry}", 'r').readlines()
+        _type = _mfa_data[4].split('otpauth://')[1].split('/')[0]
+        _secret = _mfa_data[4].split('?secret=')[1].split('&issuer=')[0]
+        _algo = _mfa_data[4].split('&algorithm=')[1].split('&digits=')[0]
+        _digits = int(_mfa_data[4].split('&digits=')[1].split('&period=')[0])
+        _period = int(_mfa_data[4].split('&period=')[1])
+        rmtree(f"{path.expanduser('~/.config/sshyp/tmp/')}{_shm_folder}")
+        return _type, _secret, _algo, _digits, _period
+    except IndexError:
+        print(f"\n\u001b[38;5;9merror: ({argument_list[1].replace('/', '', 1)}) no valid mfa data\u001b[0m\n")
+        rmtree(f"{path.expanduser('~/.config/sshyp/tmp/')}{_shm_folder}")
+        s_exit(1)
 
 
 if __name__ == '__main__':
