@@ -23,11 +23,11 @@ def totp(_secret, _algo, _digits, _period):  # uses provided information to gene
 
 
 def mfa_read_shortcut():  # reads and extracts MFA info from the user-specified sshyp entry
-    if not Path(f"{directory}{argument_list[1].replace('/', '', 1)}.gpg").exists():
-        print(f"\n\u001b[38;5;9merror: entry ({argument_list[1].replace('/', '', 1)}) does not exist\u001b[0m\n")
+    if not Path(f"{directory}{argument}.gpg").exists():
+        print(f"\n\u001b[38;5;9merror: entry ({argument}) does not exist\u001b[0m\n")
         s_exit(1)
     _shm_folder, _shm_entry = shm_gen()
-    decrypt(directory + argument_list[1].replace('/', '', 1), _shm_folder, _shm_entry, gpg)
+    decrypt(directory + argument, _shm_folder, _shm_entry, gpg)
     try:
         _mfa_data = open(f"{path.expanduser('~/.config/sshyp/tmp/')}{_shm_folder}/{_shm_entry}", 'r').readlines()
         _type = _mfa_data[4].split('otpauth://')[1].split('/')[0]
@@ -38,7 +38,7 @@ def mfa_read_shortcut():  # reads and extracts MFA info from the user-specified 
         rmtree(f"{path.expanduser('~/.config/sshyp/tmp/')}{_shm_folder}")
         return _type, _secret, _algo, _digits, _period
     except IndexError:
-        print(f"\n\u001b[38;5;9merror: ({argument_list[1].replace('/', '', 1)}) no valid mfa data\u001b[0m\n")
+        print(f"\n\u001b[38;5;9merror: entry ({argument}) does not contain valid mfa data\u001b[0m\n")
         rmtree(f"{path.expanduser('~/.config/sshyp/tmp/')}{_shm_folder}")
         s_exit(1)
 
@@ -60,6 +60,7 @@ if __name__ == '__main__':
         if len(argument_list) == 1:
             entry_list_gen()
             argument_list.append(input('entry to read: '))
+        argument = ' '.join(argument_list[1:]).replace('/', '', 1)
         mfa_data, copied = mfa_read_shortcut(), None
         print('\nmfa key copied to clipboard\n\nuntil this process is closed, your clipboard will be automatically '
               'updated with the newest mfa key')
