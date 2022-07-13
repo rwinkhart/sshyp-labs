@@ -7,10 +7,13 @@ from pathlib import Path
 from shutil import rmtree
 from sshync import get_profile
 from sshyp import decrypt, entry_list_gen, shm_gen
-from steam.guard import generate_twofactor_code as steam_totp
 from struct import pack, unpack
 from sys import argv, exit as s_exit
 from time import sleep, strftime, time
+try:
+    from steam.guard import generate_twofactor_code as steam_totp
+except ModuleNotFoundError:
+    pass
 
 
 def totp(_secret, _algo, _digits, _period):  # uses provided information to generate a standard totp key
