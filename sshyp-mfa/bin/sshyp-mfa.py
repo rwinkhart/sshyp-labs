@@ -49,6 +49,9 @@ def mfa_read_shortcut():  # reads and extracts MFA info from the user-specified 
 if __name__ == '__main__':
     # argument fetcher
     argument_list = argv
+    if not len(argv) == 1 and not argv[1].strip().startswith('/'):
+        print(f"\n\u001b[38;5;9merror: invalid argument - run 'man sshyp-mfa' for usage information\u001b[0m\n")
+        s_exit(1)
 
     # user data fetcher
     ssh_info = get_profile(path.expanduser('~/.config/sshyp/sshyp.sshync'))
