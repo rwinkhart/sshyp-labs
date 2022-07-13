@@ -12,7 +12,7 @@ from sys import argv, exit as s_exit
 from time import sleep, strftime, time
 try:
     from steam.guard import generate_twofactor_code as steam_totp
-except ModuleNotFoundError:
+except (ModuleNotFoundError, ImportError):
     pass
 
 
