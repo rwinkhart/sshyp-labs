@@ -34,7 +34,7 @@ mkdir -p packages
 if [ "$distro" == "1" ]; then
     echo -e '\nPackaging for Haiku...\n'
     mkdir -p packages/haikutemp/documentation/{man/man1,packages/sshyp-mfa}
-    echo "name			sshyp-mfa
+    echo "name			sshypmfa
 version			"$version"-"$revision"
 architecture		any
 summary			\"An MFA (TOTP/Steam) key generator for the sshyp password manager\"
@@ -48,8 +48,8 @@ copyrights {
 	\"2021-2022 Randall Winkhart\"
 }
 provides {
-	sshyp-mfa = "$version"
-	cmd:sshyp-mfa
+	sshypmfa = "$version"
+	cmd:sshypmfa
 }
 requires {
 	sshyp
