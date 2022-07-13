@@ -99,8 +99,7 @@ fi
 
 if [ "$distro" == "5" ] || [ "$distro" == "8" ]; then
     echo -e '\nPackaging for Termux...\n'
-    mkdir -p packages/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/{data,DEBIAN}
-    mkdir -p packages/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/share/man/man1
+    mkdir -p packages/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/{data/data/com.termux/files/usr/share/man/man1,DEBIAN}
     echo "Package: sshyp-mfa
 Version: $version
 Section: utils
@@ -112,7 +111,7 @@ Priority: optional
 Installed-Size: 100
 " > packages/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/DEBIAN/control
     cp -r bin packages/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/
-    ln -s /usr/bin/sshyp-mfa.py packages/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/bin/sshyp-mfa
+    ln -s /data/data/com.termux/files/usr/bin/sshyp-mfa.py packages/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/bin/sshyp-mfa
     cp -r share packages/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/
     cp extra/manpage packages/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/share/man/man1/sshyp-mfa.1
     gzip packages/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/share/man/man1/sshyp-mfa.1
