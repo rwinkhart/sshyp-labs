@@ -195,8 +195,7 @@ prefix: /
                    },
                 },
 " > packages/FreeBSDtemp/+MANIFEST
-echo "/bin/python3
-/usr/bin/sshyp-mfa
+echo "/usr/bin/sshyp-mfa
 /usr/bin/sshyp-mfa.py
 /usr/share/licenses/sshyp-mfa/license
 /usr/share/man/man1/sshyp-mfa.1.gz
