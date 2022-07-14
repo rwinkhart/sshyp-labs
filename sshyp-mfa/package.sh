@@ -176,7 +176,6 @@ if [ "$distro" == "4" ] || [ "$distro" == "8" ]; then
     echo -e '\nPackaging for FreeBSD...\n'
     mkdir -p packages/FreeBSDtemp/bin
     tar xf packages/sshyp-mfa-"$version".tar.xz -C packages/FreeBSDtemp
-    ln -s /usr/local/bin/python3 packages/FreeBSDtemp/bin/python3
     echo "name: sshyp-mfa
 version: \""$version"\"
 abi = \"FreeBSD:13:*\";
