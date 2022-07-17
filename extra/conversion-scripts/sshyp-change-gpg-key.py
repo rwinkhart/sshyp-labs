@@ -18,17 +18,11 @@ if __name__ == "__main__":
                 system(f"gpg -d '{dirPath}/{filename}' "
                        f"> '{dirPath.replace(directory, directory + '.new')}/{filename[:-4]}'")
                 _old_contents, _new_contents = \
-                    open(f"{dirPath.replace(directory, directory + '.new')}/{filename[:-4]}", 'r').readlines(), ''
+                    open(f"{dirPath.replace(directory, directory + '.new')}/{filename[:-4]}", 'r').readlines(), []
                 for _num in range(len(_old_contents)):
-                    if _num == 3:
-                        if _old_contents[_num] == ' ' or _old_contents[_num] == '\n':
-                            pass
-                        else:
-                            _new_contents += _old_contents[_num]
-                    else:
-                        _new_contents += _old_contents[_num]
+                    _new_contents += _old_contents[_num]
                 for _num in reversed(range(len(_new_contents))):
-                    if _new_contents[_num] == '\n' or _new_contents[_num] == '':
+                    if _new_contents[_num] == '\n' or _new_contents[_num] == '' or _new_contents[_num] == ' ':
                         _new_contents = _new_contents[:-1]
                     else:
                         break
