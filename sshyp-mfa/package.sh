@@ -60,6 +60,7 @@ urls {
 }
 " > packages/haikutemp/.PackageInfo
     cp -r bin packages/haikutemp/
+    sed -i '1 s/.*/#!\/bin\/env\ python3/' packages/haikutemp/bin/sshyp-mfa.py
     ln -s /bin/sshyp-mfa.py packages/haikutemp/bin/sshyp-mfa
     cp -r share/licenses/sshyp-mfa/ packages/haikutemp/documentation/packages/
     cp extra/manpage packages/haikutemp/documentation/man/man1/sshyp-mfa.1
