@@ -1,4 +1,4 @@
-#!/bin/python3
+#!/usr/bin/env python3
 
 from base64 import b32decode
 from hmac import new as new_mac
