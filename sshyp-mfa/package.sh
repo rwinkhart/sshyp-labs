@@ -130,7 +130,7 @@ if [ "$distro" == "3" ] || [ "$distro" == "4" ] || [ "$distro" == "6" ] || [ "$d
     cp -r share packages/generictemp/usr/
     cp extra/manpage packages/generictemp/usr/share/man/man1/sshyp-mfa.1
     gzip packages/generictemp/usr/share/man/man1/sshyp-mfa.1
-    tar -C packages/generictemp -cvf packages/sshyp-mfa-"$version".tar.xz usr/
+    tar -C packages/generictemp -cvJf packages/sshyp-mfa-"$version".tar.xz usr/
     rm -rf packages/generictemp
     sha512="$(sha512sum packages/sshyp-mfa-"$version".tar.xz | awk '{print $1;}')"
     echo -e "\nsha512 sum:\n$sha512"
