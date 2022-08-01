@@ -1,4 +1,4 @@
-#!/bin/python3
+#!/usr/bin/env python3
 
 from os import path, system, uname, walk
 from pathlib import Path
