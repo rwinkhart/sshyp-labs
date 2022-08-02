@@ -3,12 +3,13 @@
 # This script packages sshyp-mfa (from source) for various UNIX(-like) environments.
 # Dependencies (Arch Linux): dpkg (packaging for Debian/Termux), freebsd-pkg (packaging for FreeBSD)
 # Dependencies (Fedora) (can only package for self): rpmdevtools
+# Dependencies (Alpine): xz (not part of a basic installation, needed for generic package creation and unpacking for abuild), alpine-sdk (required to build the .apk file from the generated APKBUILD), bash
 # NOTE It is recommended to instead use the latest officially packaged and tagged release.
 
 echo -e '\nOptions (please enter the number only):'
 echo -e '\nPackage Formats:\n\n1. Haiku\n2. Debian&Ubuntu Linux\n3. Fedora Linux\n4. FreeBSD\n5. Termux\n6. Generic (used for PKGBUILD/APKBUILD)'
-echo -e '\nBuild Scripts:\n\n7. Arch Linux (PKGBUILD)'
-echo -e '\nOther:\n\n8. All (generates all distribution packages (excluding Haiku and Fedora, as these must be packaged on their respective distributions) and build scripts)\n'
+echo -e '\nBuild Scripts:\n\n7. Arch Linux (PKGBUILD)\n8. Alpine Linux (APKBUILD)'
+echo -e '\nOther:\n\n9. All (generates all distribution packages (excluding Haiku, Fedora, and Alpine, as these must be packaged on their respective distributions) and build scripts)\n'
 read -n 1 -r -p "Distribution: " distro
 
 echo -e '\n\nThe value entered in this field will only affect the version reported to the package manager. The latest source is used regardless.\n'
@@ -17,7 +18,7 @@ read -r -p "Version number: " version
 echo -e '\nThe value entered in this field will only affect the revision number for build scripts.\n'
 read -r -p "Revision number: " revision
 
-if [ "$distro" == "7" ] || [ "$distro" == "8" ]; then
+if [ "$distro" == "7" ] || [ "$distro" == "8" ] || [ "$distro" == "9" ]; then
     echo -e '\nOptions (please enter the number only):'
     echo -e '\n1. GitHub Release Tag\n2. Local\n'
     read -r -p "Source (for build scripts): " source
@@ -74,7 +75,7 @@ urls {
     echo -e "\nHaiku packaging complete.\n"
 fi
 
-if [ "$distro" == "2" ] || [ "$distro" == "8" ]; then
+if [ "$distro" == "2" ] || [ "$distro" == "9" ]; then
     echo -e '\nPackaging for Debian...\n'
     mkdir -p packages/debiantemp/sshyp-mfa_"$version"-"$revision"_all/{DEBIAN,usr/share/man/man1}
     echo "Package: sshyp-mfa
@@ -98,7 +99,7 @@ Installed-Size: 100
     echo -e "\nDebian packaging complete.\n"
 fi
 
-if [ "$distro" == "5" ] || [ "$distro" == "8" ]; then
+if [ "$distro" == "5" ] || [ "$distro" == "9" ]; then
     echo -e '\nPackaging for Termux...\n'
     mkdir -p packages/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/{data/data/com.termux/files/usr/share/man/man1,DEBIAN}
     echo "Package: sshyp-mfa
@@ -122,7 +123,7 @@ Installed-Size: 100
     echo -e "\nTermux packaging complete.\n"
 fi
 
-if [ "$distro" == "3" ] || [ "$distro" == "4" ] || [ "$distro" == "6" ] || [ "$distro" == "7" ] || [ "$distro" == "8" ]; then
+if [ "$distro" == "3" ] || [ "$distro" == "4" ] || [ "$distro" == "6" ] || [ "$distro" == "7" ] || [ "$distro" == "8" ] || [ "$distro" == "9" ]; then
     echo -e '\nPackaging as generic...\n'
     mkdir -p packages/generictemp/usr/share/man/man1
     cp -r bin packages/generictemp/usr/
@@ -173,7 +174,7 @@ rm -rf ~/rpmbuild
 echo -e "\nFedora packaging complete.\n"
 fi
 
-if [ "$distro" == "4" ] || [ "$distro" == "8" ]; then
+if [ "$distro" == "4" ] || [ "$distro" == "9" ]; then
     echo -e '\nPackaging for FreeBSD...\n'
     mkdir -p packages/FreeBSDtemp/bin
     tar xf packages/sshyp-mfa-"$version".tar.xz -C packages/FreeBSDtemp
@@ -206,10 +207,9 @@ rm -rf packages/FreeBSDtemp
 echo -e "\nFreeBSD packaging complete.\n"
 fi
 
-if [ "$distro" == "7" ] || [ "$distro" == "8" ]; then
+if [ "$distro" == "7" ] || [ "$distro" == "9" ]; then
     echo -e '\nGenerating PKGBUILD...'
     echo "# Maintainer: Randall Winkhart <idgr at tutanota dot com>
-
 pkgname=sshyp-mfa
 pkgver="$version"
 pkgrel="$revision"
@@ -229,4 +229,28 @@ package() {
 }
 " > packages/PKGBUILD
     echo -e "\nPKGBUILD generated.\n"
+fi
+
+if [ "$distro" == "8" ] || [ "$distro" == "9" ]; then
+    echo -e '\nGenerating APKBUILD...'
+    echo "# Maintainer: Randall Winkhart <idgr@tutanota.com>
+pkgname=sshyp-mfa
+pkgver="$version"
+pkgrel="$revision"
+pkgdesc='An MFA (TOTP/Steam) key generator for the sshyp password manager'
+options=!check
+url='https://github.com/rwinkhart/sshyp-labs'
+arch='noarch'
+license='GPL-3.0-or-later'
+depends='sshyp python3'
+source=\""$source"\"
+package() {
+    mkdir -p "\"\$pkgdir\""
+    cp -r "\"\$srcdir/usr/"\" "\"\$pkgdir\""
+}
+sha512sums=\"
+"$sha512'  'sshyp-mfa\"\$pkgver\".tar.xz"
+\"
+" > packages/APKBUILD
+    echo -e "\nAPKBUILD generated.\n"
 fi
