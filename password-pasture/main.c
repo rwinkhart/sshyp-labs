@@ -1,7 +1,5 @@
 #include <gtk/gtk.h>
-//#include <stdlib.h>
-
-
+//#include <string.h>
 
 void password_convert(GtkEntryBuffer *buffer)
 {
@@ -15,12 +13,17 @@ void password_convert(GtkEntryBuffer *buffer)
     system(dest);
 }
 
+void gpg_lock()
+{
+    system("gpgconf --reload gpg-agent");
+}
+
 void password_prompt(GtkWindow *window)
 {
     GtkWidget *dialog;
     GtkWidget *password_entry;
     GtkWidget *box_header;
-    GtkWidget *button_unlock, *button_cancel;
+    GtkWidget *button_unlock, *button_cancel, *button_lock;
     GtkWidget *dialog_header;
     GtkWidget *content_area;
 
@@ -30,59 +33,102 @@ void password_prompt(GtkWindow *window)
             gtk_entry_set_visibility(GTK_ENTRY(password_entry), FALSE);
             gtk_entry_set_placeholder_text(GTK_ENTRY(password_entry), "passphrase");
         dialog_header = gtk_header_bar_new();
+            gtk_header_bar_set_show_title_buttons(GTK_HEADER_BAR(dialog_header), FALSE);
             box_header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
                 gtk_widget_set_halign(box_header, GTK_ALIGN_CENTER);
-                gtk_box_set_homogeneous(GTK_BOX(box_header), TRUE);
-            gtk_header_bar_set_show_title_buttons(GTK_HEADER_BAR(dialog_header), FALSE);
-            button_unlock = gtk_button_new_with_label("unlock");
-            button_cancel = gtk_button_new_with_label("cancel");
-            gtk_box_append(GTK_BOX(box_header), button_unlock);
-            gtk_box_append(GTK_BOX(box_header), button_cancel);
+                button_unlock = gtk_button_new_with_label("unlock");
+                button_cancel = gtk_button_new_with_label("cancel");
+                button_lock = gtk_button_new_from_icon_name("changes-prevent");
+                gtk_widget_set_size_request(button_lock, 20, -1);
+                gtk_box_append(GTK_BOX(box_header), button_unlock);
+                gtk_box_append(GTK_BOX(box_header), button_cancel);
+                gtk_box_append(GTK_BOX(box_header), button_lock);
             gtk_header_bar_set_title_widget(GTK_HEADER_BAR(dialog_header), box_header);
         gtk_window_set_title(GTK_WINDOW(dialog), "");
         gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(window));
         gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
         gtk_window_set_default_size(GTK_WINDOW(dialog), 50, 50);
+
         // add password entry to dialog content area
         content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
         gtk_box_append(GTK_BOX(content_area), password_entry);
+
         gtk_window_set_titlebar(GTK_WINDOW(dialog), dialog_header);
         gtk_widget_show(dialog);
+
         // button actions
-        g_signal_connect_swapped(button_cancel, "clicked", G_CALLBACK(gtk_window_close), dialog);
         g_signal_connect_swapped(button_unlock, "clicked", G_CALLBACK(password_convert), gtk_entry_get_buffer(GTK_ENTRY(password_entry)));
         g_signal_connect_swapped(button_unlock, "clicked", G_CALLBACK(gtk_window_close), dialog);
+        g_signal_connect_swapped(button_cancel, "clicked", G_CALLBACK(gtk_window_close), dialog);
+        g_signal_connect(button_lock, "clicked", G_CALLBACK(gpg_lock), NULL);
+        g_signal_connect_swapped(button_lock, "clicked", G_CALLBACK(gtk_window_close), dialog);
 }
 
+void copy_edit_field_prompt(GtkWindow *window)
+{
+    GtkWidget *dialog;
+    GtkWidget *button_cancel, *button_pwd, *button_usr, *button_url, *button_nte, *button_mfa;
+    GtkWidget *dialog_header;
+    GtkWidget *content_area;
+
+    dialog = gtk_dialog_new();
+
+        dialog_header = gtk_header_bar_new();
+            gtk_header_bar_set_show_title_buttons(GTK_HEADER_BAR(dialog_header), FALSE);
+            button_cancel = gtk_button_new_with_label("cancel");
+            gtk_header_bar_set_title_widget(GTK_HEADER_BAR(dialog_header), button_cancel);
+        gtk_window_set_title(GTK_WINDOW(dialog), "");
+        gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(window));
+        gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
+        gtk_window_set_default_size(GTK_WINDOW(dialog), 50, 50);
+
+        // add options to dialog content area
+        content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+            button_pwd = gtk_button_new_with_label("password");
+            button_usr = gtk_button_new_with_label("username");
+            button_url = gtk_button_new_with_label("url");
+            button_nte = gtk_button_new_with_label("note");
+            button_mfa = gtk_button_new_with_label("mfa");
+            gtk_box_append(GTK_BOX(content_area), button_pwd);
+            gtk_box_append(GTK_BOX(content_area), button_usr);
+            gtk_box_append(GTK_BOX(content_area), button_url);
+            gtk_box_append(GTK_BOX(content_area), button_nte);
+            gtk_box_append(GTK_BOX(content_area), button_mfa);
+
+        gtk_window_set_titlebar(GTK_WINDOW(dialog), dialog_header);
+        gtk_widget_show(dialog);
+
+        // button actions
+        g_signal_connect_swapped(button_cancel, "clicked", G_CALLBACK(gtk_window_close), dialog);
+        g_signal_connect_swapped(button_pwd, "clicked", G_CALLBACK(gtk_window_close), dialog);
+        g_signal_connect_swapped(button_usr, "clicked", G_CALLBACK(gtk_window_close), dialog);
+        g_signal_connect_swapped(button_url, "clicked", G_CALLBACK(gtk_window_close), dialog);
+        g_signal_connect_swapped(button_nte, "clicked", G_CALLBACK(gtk_window_close), dialog);
+        g_signal_connect_swapped(button_mfa, "clicked", G_CALLBACK(gtk_window_close), dialog);
+}
 
 void sshyp_sync()
 {
     system("sshyp sync");
 }
 
-void gpg_lock()
-{
-    system("gpgconf --reload gpg-agent");
-}
-
 static void activate(GtkApplication* app)
 {
     GtkWidget *window;
-    GtkWidget *button_debug, *button_sync, *button_lock, *button_unlock, *button_shear, *button_read;
-    GtkWidget *button_copy_pwd, *button_copy_usr, *button_copy_url, *button_copy_nte, *button_copy_mfa;
-    GtkWidget *button_edit_pwd, *button_edit_usr, *button_edit_url, *button_edit_nte;
-    GtkWidget *grid_main, *grid_browse;
-    GtkWidget *box_pwd, *box_usr, *box_url, *box_nte, *box_mfa;
+    GtkWidget *button_debug, *button_sync, *button_unlock, *button_shear, *button_read, *button_edit, *button_copy;
+    GtkWidget *box_main, *box_browse_controls;
     GtkWidget *header_bar;
-    GtkWidget *stack, *stack_browse;
-    GtkWidget *stack_switcher, *stack_switcher_browse;
+    GtkWidget *stack;
+    GtkWidget *stack_switcher;
     GtkWidget *box_home, *sshyp_logo, *label_home1;
+    GtkStackPage *page_info;
 
     window = gtk_application_window_new(app);
     gtk_window_set_title(GTK_WINDOW(window), "");
-    gtk_window_set_default_size(GTK_WINDOW(window), 720, 1440);
+    gtk_window_set_default_size(GTK_WINDOW(window), 360, 720);
 
     header_bar = gtk_header_bar_new();
+        gtk_header_bar_set_show_title_buttons(GTK_HEADER_BAR(header_bar), FALSE);
 
     button_sync = gtk_button_new_from_icon_name("view-refresh");
     g_signal_connect(button_sync, "clicked", G_CALLBACK(sshyp_sync), NULL);
@@ -92,25 +138,45 @@ static void activate(GtkApplication* app)
     g_signal_connect_swapped(button_unlock, "clicked", G_CALLBACK(password_prompt), window);
     gtk_header_bar_pack_end(GTK_HEADER_BAR(header_bar), button_unlock);
 
-    button_lock = gtk_button_new_from_icon_name("changes-prevent");
-    g_signal_connect(button_lock, "clicked", G_CALLBACK(gpg_lock), NULL);
-    gtk_header_bar_pack_end(GTK_HEADER_BAR(header_bar), button_lock);
-
     button_debug = gtk_button_new_from_icon_name("applications-science");
-    g_signal_connect(button_debug, "clicked", G_CALLBACK(NULL), NULL);
-    gtk_header_bar_pack_end(GTK_HEADER_BAR(header_bar), button_debug);
+    g_signal_connect_swapped(button_debug, "clicked", G_CALLBACK(copy_edit_field_prompt), window);
+    //gtk_header_bar_pack_end(GTK_HEADER_BAR(header_bar), button_debug);
 
-    grid_main = gtk_grid_new();
-    gtk_widget_set_halign(grid_main, GTK_ALIGN_CENTER);
-    gtk_widget_set_valign(grid_main, GTK_ALIGN_START);
-    gtk_window_set_child(GTK_WINDOW(window), grid_main);
+    // !!start main stack stuff!!
 
-    // start stack stuff
+    // create box to hold the main stack
+    box_main = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+        gtk_window_set_child(GTK_WINDOW(window), box_main);
+
+    // create the stack
     stack = gtk_stack_new();
-    gtk_stack_set_transition_type(GTK_STACK(stack), GTK_STACK_TRANSITION_TYPE_SLIDE_LEFT_RIGHT);
-    gtk_grid_attach(GTK_GRID(grid_main), stack, 0, 0, 1, 1);
+        gtk_stack_set_transition_type(GTK_STACK(stack), GTK_STACK_TRANSITION_TYPE_SLIDE_LEFT_RIGHT);
 
-    // home
+    // attach the main stack to the box
+    gtk_box_append(GTK_BOX(box_main), stack);
+
+    // browse
+    button_shear = gtk_button_new_from_icon_name("edit-delete");
+        gtk_widget_set_hexpand(button_shear, FALSE);
+        gtk_widget_set_size_request(button_shear, 50, -1);
+    button_read = gtk_button_new_from_icon_name("mail-read");
+        gtk_widget_set_hexpand(button_read, TRUE);
+    button_edit = gtk_button_new_from_icon_name("document-edit");
+        gtk_widget_set_hexpand(button_edit, TRUE);
+        g_signal_connect_swapped(button_edit, "clicked", G_CALLBACK(copy_edit_field_prompt), window);
+    button_copy = gtk_button_new_from_icon_name("edit-copy");
+        g_signal_connect_swapped(button_copy, "clicked", G_CALLBACK(copy_edit_field_prompt), window);
+        gtk_widget_set_hexpand(button_copy, TRUE);
+    box_browse_controls = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+        gtk_widget_set_valign(box_browse_controls, GTK_ALIGN_START);
+        gtk_widget_set_size_request(box_browse_controls, -1, 50);
+        gtk_widget_set_vexpand(box_browse_controls, TRUE);
+        gtk_box_append(GTK_BOX(box_browse_controls), button_shear);
+        gtk_box_append(GTK_BOX(box_browse_controls), button_read);
+        gtk_box_append(GTK_BOX(box_browse_controls), button_edit);
+        gtk_box_append(GTK_BOX(box_browse_controls), button_copy);
+
+    // info
     box_home = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
         sshyp_logo = gtk_image_new_from_file("PLACEHOLDER");
             gtk_image_set_pixel_size(GTK_IMAGE(sshyp_logo), 300);
@@ -119,61 +185,15 @@ static void activate(GtkApplication* app)
             gtk_label_set_markup(GTK_LABEL(label_home1), "<span size='large'><b>password pasture</b></span>\n<span size='small'>experimental gui client for sshyp</span>");
         gtk_box_append(GTK_BOX(box_home), sshyp_logo);
         gtk_box_append(GTK_BOX(box_home), label_home1);
-    gtk_stack_add_titled(GTK_STACK(stack), box_home, "home", "home");
-
-    // browse
-        // resources
-        button_shear = gtk_button_new_from_icon_name("edit-delete");
-        button_read = gtk_button_new_from_icon_name("mail-read");
-        stack_browse = gtk_stack_new();
-            box_pwd = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-                gtk_box_set_homogeneous(GTK_BOX(box_pwd), TRUE);
-                button_copy_pwd = gtk_button_new_from_icon_name("edit-copy");
-                button_edit_pwd = gtk_button_new_from_icon_name("document-edit");
-                gtk_box_append(GTK_BOX(box_pwd), button_copy_pwd);
-                gtk_box_append(GTK_BOX(box_pwd), button_edit_pwd);
-                gtk_stack_add_titled(GTK_STACK(stack_browse), box_pwd, "password", "password");
-            box_usr = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-                gtk_box_set_homogeneous(GTK_BOX(box_usr), TRUE);
-                button_copy_usr = gtk_button_new_from_icon_name("edit-copy");
-                button_edit_usr = gtk_button_new_from_icon_name("document-edit");
-                gtk_box_append(GTK_BOX(box_usr), button_copy_usr);
-                gtk_box_append(GTK_BOX(box_usr), button_edit_usr);
-                gtk_stack_add_titled(GTK_STACK(stack_browse), box_usr, "username", "username");
-            box_url = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-                gtk_box_set_homogeneous(GTK_BOX(box_url), TRUE);
-                button_copy_url = gtk_button_new_from_icon_name("edit-copy");
-                button_edit_url = gtk_button_new_from_icon_name("document-edit");
-                gtk_box_append(GTK_BOX(box_url), button_copy_url);
-                gtk_box_append(GTK_BOX(box_url), button_edit_url);
-                gtk_stack_add_titled(GTK_STACK(stack_browse), box_url, "url", "url");
-            box_nte = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-                gtk_box_set_homogeneous(GTK_BOX(box_nte), TRUE);
-                button_copy_nte = gtk_button_new_from_icon_name("edit-copy");
-                button_edit_nte = gtk_button_new_from_icon_name("document-edit");
-                gtk_box_append(GTK_BOX(box_nte), button_copy_nte);
-                gtk_box_append(GTK_BOX(box_nte), button_edit_nte);
-                gtk_stack_add_titled(GTK_STACK(stack_browse), box_nte, "note", "note");
-            box_mfa = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-                gtk_box_set_homogeneous(GTK_BOX(box_mfa), TRUE);
-                button_copy_mfa = gtk_button_new_from_icon_name("edit-copy");
-                gtk_box_append(GTK_BOX(box_mfa), button_copy_mfa);
-                gtk_stack_add_titled(GTK_STACK(stack_browse), box_mfa, "mfa", "mfa");
-    stack_switcher_browse = gtk_stack_switcher_new();
-    gtk_stack_switcher_set_stack(GTK_STACK_SWITCHER(stack_switcher_browse), GTK_STACK(stack_browse));
-    grid_browse = gtk_grid_new();
-    gtk_widget_set_halign(grid_browse, GTK_ALIGN_START);
-    gtk_widget_set_valign(grid_browse, GTK_ALIGN_START);
-    gtk_grid_attach(GTK_GRID(grid_browse), button_shear, 0, 0, 1, 2);
-    gtk_grid_attach(GTK_GRID(grid_browse), button_read, 1, 0, 1, 2);
-    gtk_grid_attach(GTK_GRID(grid_browse), stack_switcher_browse, 2, 1, 1, 1);
-    gtk_grid_attach(GTK_GRID(grid_browse), stack_browse, 2, 0, 1, 1);
-    gtk_stack_add_titled(GTK_STACK(stack), grid_browse, "browse", "browse");
 
     stack_switcher = gtk_stack_switcher_new();
-    gtk_stack_switcher_set_stack(GTK_STACK_SWITCHER(stack_switcher), GTK_STACK(stack));
+        page_info = gtk_stack_add_titled(GTK_STACK(stack), box_home, "info", "info");
+            gtk_stack_page_set_icon_name(GTK_STACK_PAGE(page_info), "help-about");
+        gtk_stack_add_titled(GTK_STACK(stack), box_browse_controls, "browse", "browse");
+        gtk_stack_switcher_set_stack(GTK_STACK_SWITCHER(stack_switcher), GTK_STACK(stack));
     gtk_header_bar_pack_start(GTK_HEADER_BAR(header_bar), stack_switcher);
-    // end stack stuff
+
+    // !!end main stack stuff!!
 
     gtk_window_set_titlebar(GTK_WINDOW(window), header_bar);
     gtk_widget_show(window);
