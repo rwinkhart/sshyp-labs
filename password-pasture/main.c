@@ -159,7 +159,7 @@ static void activate(GtkApplication* app)
 
     button_debug = gtk_button_new_from_icon_name("applications-science");
     g_signal_connect(button_debug, "clicked", G_CALLBACK(entry_list_populate), NULL);
-    gtk_header_bar_pack_end(GTK_HEADER_BAR(header_bar), button_debug);
+    //gtk_header_bar_pack_end(GTK_HEADER_BAR(header_bar), button_debug);
 
     // !!start main stack stuff!!
 
