@@ -1,33 +1,22 @@
 #include <gtk/gtk.h>
 
-void password_convert(GtkEntryBuffer *buffer)
-{
+void password_convert(GtkEntryBuffer *buffer) {
     const char *password = gtk_entry_buffer_get_text(buffer);
-    char *com1 = "gpg --pinentry-mode loopback --batch --passphrase-fd 0 --armor -qd --output /dev/null ~/.config/sshyp/lock.gpg <<< '";
-    char *com2 = "'";
-    char dest[1000];
-    strcpy(dest, com1);
-    strcat(dest, password);
-    strcat(dest, com2);
-    system(dest);
+    char *sub1 = "gpg --pinentry-mode loopback --batch --passphrase-fd 0 --armor -qd --output /dev/null ~/.config/sshyp/lock.gpg <<< '", *sub2 = "'", command[1024];
+    strcpy(command, sub1); strcat(command, password); strcat(command, sub2);
+    system(command);
 }
 
-void gpg_lock()
-{
+void gpg_lock() {
     system("gpgconf --reload gpg-agent");
 }
 
-void password_prompt(GtkWindow *window)
-{
-    GtkWidget *dialog;
-    GtkWidget *password_entry;
-    GtkWidget *box_header;
-    GtkWidget *button_unlock, *button_cancel, *button_lock;
-    GtkWidget *dialog_header;
-    GtkWidget *content_area;
+void password_prompt(GtkWindow *window) {
+    GtkWidget *dialog, *dialog_header, *box_header;  // main window and header bar
+    GtkWidget *button_unlock, *button_cancel, *button_lock;  // header bar buttons
+    GtkWidget *content_area, *password_entry;  // content area and widgets
 
     dialog = gtk_dialog_new();
-
         password_entry = gtk_entry_new();
             gtk_entry_set_visibility(GTK_ENTRY(password_entry), FALSE);
             gtk_entry_set_placeholder_text(GTK_ENTRY(password_entry), "passphrase");
@@ -38,7 +27,7 @@ void password_prompt(GtkWindow *window)
                 button_unlock = gtk_button_new_with_label("unlock");
                 button_cancel = gtk_button_new_with_label("cancel");
                 button_lock = gtk_button_new_from_icon_name("changes-prevent");
-                gtk_widget_set_size_request(button_lock, 20, -1);
+                    gtk_widget_set_size_request(button_lock, 20, -1);
                 gtk_box_append(GTK_BOX(box_header), button_unlock);
                 gtk_box_append(GTK_BOX(box_header), button_cancel);
                 gtk_box_append(GTK_BOX(box_header), button_lock);
@@ -59,19 +48,16 @@ void password_prompt(GtkWindow *window)
         g_signal_connect_swapped(button_unlock, "clicked", G_CALLBACK(password_convert), gtk_entry_get_buffer(GTK_ENTRY(password_entry)));
         g_signal_connect_swapped(button_unlock, "clicked", G_CALLBACK(gtk_window_close), dialog);
         g_signal_connect_swapped(button_cancel, "clicked", G_CALLBACK(gtk_window_close), dialog);
-        g_signal_connect(button_lock, "clicked", G_CALLBACK(gpg_lock), NULL);
+        g_signal_connect(button_lock, "clicked", G_CALLBACK(gpg_lock), 0);
         g_signal_connect_swapped(button_lock, "clicked", G_CALLBACK(gtk_window_close), dialog);
 }
 
-void copy_edit_field_prompt(GtkWindow *window)
-{
-    GtkWidget *dialog;
-    GtkWidget *button_cancel, *button_pwd, *button_usr, *button_url, *button_nte, *button_mfa;
-    GtkWidget *dialog_header;
-    GtkWidget *content_area;
+void copy_edit_field_prompt(GtkWindow *window) {
+    GtkWidget *dialog, *dialog_header;  // main window and header bar
+    GtkWidget *button_cancel;  // header bar buttons
+    GtkWidget *content_area, *button_pwd, *button_usr, *button_url, *button_nte, *button_mfa;  // content area and widgets
 
     dialog = gtk_dialog_new();
-
         dialog_header = gtk_header_bar_new();
             gtk_header_bar_set_show_title_buttons(GTK_HEADER_BAR(dialog_header), FALSE);
             button_cancel = gtk_button_new_with_label("cancel");
@@ -106,41 +92,24 @@ void copy_edit_field_prompt(GtkWindow *window)
         g_signal_connect_swapped(button_mfa, "clicked", G_CALLBACK(gtk_window_close), dialog);
 }
 
-void sshyp_sync()
-{
+void sshyp_sync() {
     system("sshyp sync");
 }
 
-void entry_list_populate()
-{
-    char *entries[] =
-            {
-                    "entry1\n", "entry2\n", "entry3\n"
-            };
-    printf("%s", entries[1]);
-}
-
-void set_selection_label(GtkWidget *button, gpointer *label)
-{
+void set_selection_label(GtkWidget *button, gpointer *label) {
     const char *button_label = gtk_button_get_label(GTK_BUTTON(button));
     gtk_label_set_text(GTK_LABEL(label), button_label);
 }
 
-static void activate(GtkApplication* app)
-{
-    GtkWidget *window;
-    GtkWidget *button_debug, *button_sync, *button_unlock, *button_shear, *button_read, *button_edit, *button_copy;
-    GtkWidget *box_main, *box_browse_page, *box_browse_controls;
-    GtkWidget *header_bar;
-    GtkWidget *stack;
-    GtkWidget *stack_switcher;
-    GtkWidget *box_home, *sshyp_logo, *label_home1;
-    GtkStackPage *page_info;
-    GtkListBox *list_box;
-    GtkWidget *scrollable;
-    GtkWidget *entry_button;
-    GtkWidget *label_selected;
-    char *button_label;
+static void activate(GtkApplication* app) {
+    GtkWidget *window, *header_bar;  // main window and header bar
+    GtkWidget *button_sync, *button_unlock;  // header bar buttons
+    GtkWidget *stack, *stack_switcher; GtkStackPage *page_info;  // stack widgets
+    GtkWidget *box_info, *sshyp_logo, *label_home1;  // info page widgets
+    GtkWidget *box_browse_page, *box_browse_controls;  // browse page boxes
+    GtkWidget *button_shear, *button_read, *button_edit, *button_copy;  // browse buttons
+    GtkWidget *label_selected; char *button_label;  // selected entry label, modifiable button label
+    GtkWidget *scrollable, *entry_button; GtkListBox *list_box;  // scrollable entry list widgets
 
     window = gtk_application_window_new(app);
     gtk_window_set_title(GTK_WINDOW(window), "");
@@ -150,29 +119,25 @@ static void activate(GtkApplication* app)
         gtk_header_bar_set_show_title_buttons(GTK_HEADER_BAR(header_bar), FALSE);
 
     button_sync = gtk_button_new_from_icon_name("view-refresh");
-    g_signal_connect(button_sync, "clicked", G_CALLBACK(sshyp_sync), NULL);
+    g_signal_connect(button_sync, "clicked", G_CALLBACK(sshyp_sync), 0);
     gtk_header_bar_pack_end(GTK_HEADER_BAR(header_bar), button_sync);
 
     button_unlock = gtk_button_new_from_icon_name("changes-allow");
     g_signal_connect_swapped(button_unlock, "clicked", G_CALLBACK(password_prompt), window);
     gtk_header_bar_pack_end(GTK_HEADER_BAR(header_bar), button_unlock);
 
-    button_debug = gtk_button_new_from_icon_name("applications-science");
-    g_signal_connect(button_debug, "clicked", G_CALLBACK(entry_list_populate), NULL);
+    //GtkWidget *button_debug = gtk_button_new_from_icon_name("applications-science");
+    //g_signal_connect(button_debug, "clicked", G_CALLBACK(0), 0);
     //gtk_header_bar_pack_end(GTK_HEADER_BAR(header_bar), button_debug);
 
     // !!start main stack stuff!!
-
-    // create box to hold the main stack
-    box_main = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-        gtk_window_set_child(GTK_WINDOW(window), box_main);
 
     // create the stack
     stack = gtk_stack_new();
         gtk_stack_set_transition_type(GTK_STACK(stack), GTK_STACK_TRANSITION_TYPE_SLIDE_LEFT_RIGHT);
 
-    // attach the main stack to the box
-    gtk_box_append(GTK_BOX(box_main), stack);
+    // attach the stack to the main window
+    gtk_window_set_child(GTK_WINDOW(window), stack);
 
     // browse
     button_shear = gtk_button_new_from_icon_name("edit-delete");
@@ -227,17 +192,17 @@ static void activate(GtkApplication* app)
         gtk_box_append(GTK_BOX(box_browse_page), GTK_WIDGET(scrollable));
 
     // info
-    box_home = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+    box_info = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
         sshyp_logo = gtk_image_new_from_file("PLACEHOLDER");
             gtk_image_set_pixel_size(GTK_IMAGE(sshyp_logo), 300);
         label_home1 = gtk_label_new("password pasture\nexperimental gui client for sshyp");
             gtk_label_set_justify(GTK_LABEL(label_home1), GTK_JUSTIFY_CENTER);
             gtk_label_set_markup(GTK_LABEL(label_home1), "<span size='large'><b>password pasture</b></span>\n<span size='small'>experimental gui client for sshyp</span>");
-        gtk_box_append(GTK_BOX(box_home), sshyp_logo);
-        gtk_box_append(GTK_BOX(box_home), label_home1);
+        gtk_box_append(GTK_BOX(box_info), sshyp_logo);
+        gtk_box_append(GTK_BOX(box_info), label_home1);
 
     stack_switcher = gtk_stack_switcher_new();
-        page_info = gtk_stack_add_titled(GTK_STACK(stack), box_home, "info", "info");
+        page_info = gtk_stack_add_titled(GTK_STACK(stack), box_info, "info", "info");
             gtk_stack_page_set_icon_name(GTK_STACK_PAGE(page_info), "help-about");
         gtk_stack_add_titled(GTK_STACK(stack), box_browse_page, "browse", "browse");
         gtk_stack_switcher_set_stack(GTK_STACK_SWITCHER(stack_switcher), GTK_STACK(stack));
@@ -250,15 +215,12 @@ static void activate(GtkApplication* app)
 }
 
 int main(int    argc,
-      char **argv)
-{
+      char **argv) {
     GtkApplication *app;
     int status;
-
     app = gtk_application_new("org.rwinkhart.sshyp", G_APPLICATION_FLAGS_NONE);
-    g_signal_connect(app, "activate", G_CALLBACK(activate), NULL);
+    g_signal_connect(app, "activate", G_CALLBACK(activate), 0);
     status = g_application_run(G_APPLICATION(app), argc, argv);
     g_object_unref(app);
-
     return status;
 }
