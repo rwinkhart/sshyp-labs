@@ -1,4 +1,55 @@
+#include <stdlib.h>
+#include <string.h>
+#include <dirent.h>
+#include <stddef.h>
 #include <gtk/gtk.h>
+
+GtkWidget *label_selected; GtkListBox *list_box;  // TODO remove necessity for global widgets
+char entries[1024][1024]; int entry_array_count = 0;
+
+void str_remove(char *str, const char *sub) {
+    char *p, *q, *r;
+    if (*sub && (q = r = strstr(str, sub)) != 0) {
+        size_t len = strlen(sub);
+        while ((r = strstr(p = r + len, sub)) != 0) {
+            while (p < r)
+                *q++ = *p++;
+        }
+        while ((*q++ = *p++) != '\0')
+            continue;
+    }
+}
+
+void gen_entry_array(char *path, size_t size, const char *path_orig) {
+    DIR *dir;
+    struct dirent *entry;
+    size_t len = strlen(path);
+
+    if (!(dir = opendir(path))) {
+        return; }
+
+    while ((entry = readdir(dir)) != 0) {
+        char *name = entry->d_name;
+        if (entry->d_type == DT_DIR) {
+            if (!strcmp(name, ".") || !strcmp(name, "..")) {
+                continue; }
+            path[len] = '/';
+            strcpy(path + len + 1, name);
+            gen_entry_array(path, size, path_orig);
+            path[len] = '\0';
+        } else {
+            char path_filtered[1024];
+            strcpy(path_filtered, path);
+            str_remove(path_filtered, path_orig);
+            size_t name_len = strlen(name);
+            name[name_len-4] = 0;
+            char sshyp_path[1024]; strcpy(sshyp_path, path_filtered); strcat(sshyp_path, "/"); strcat(sshyp_path, name);
+            strcpy(entries[entry_array_count], sshyp_path);
+            entry_array_count++;
+        }
+    }
+    closedir(dir);
+}
 
 void password_convert(GtkEntryBuffer *buffer) {
     const char *password = gtk_entry_buffer_get_text(buffer);
@@ -92,13 +143,40 @@ void copy_edit_field_prompt(GtkWindow *window) {
         g_signal_connect_swapped(button_mfa, "clicked", G_CALLBACK(gtk_window_close), dialog);
 }
 
-void sshyp_sync() {
-    system("sshyp sync");
-}
-
 void set_selection_label(GtkWidget *button, gpointer *label) {
     const char *button_label = gtk_button_get_label(GTK_BUTTON(button));
     gtk_label_set_text(GTK_LABEL(label), button_label);
+}
+
+void entry_list_gen() {
+    GtkWidget *entry_button;
+
+    GtkWidget *iter = gtk_widget_get_first_child ((GtkWidget *) list_box);
+    while (iter != 0) {
+        GtkWidget *next = gtk_widget_get_next_sibling (iter);
+        gtk_list_box_remove (list_box, iter);
+        iter = next;
+    }
+
+    char path[1024]; char *user_home = getenv("HOME"); strcpy(path, user_home); strcat(path, "/.local/share/sshyp");
+    char path_orig[1024]; strcpy(path_orig, path); strcat(path_orig, "/");
+    gen_entry_array(path, sizeof path, path_orig);
+    strcpy(entries[entry_array_count], "\0");
+
+    for (int i = 0; strcmp(entries[i], "\0") != 0; i++) {
+        entry_button = gtk_button_new_with_label(entries[i]);
+        gtk_label_set_xalign(GTK_LABEL(gtk_button_get_child(GTK_BUTTON(entry_button))), GTK_JUSTIFY_LEFT);
+        gtk_button_set_has_frame(GTK_BUTTON(entry_button), FALSE);
+        g_signal_connect(entry_button, "clicked", G_CALLBACK(set_selection_label), (gpointer *)label_selected);
+        gtk_list_box_append(list_box, gtk_separator_new(GTK_ORIENTATION_HORIZONTAL));
+        gtk_list_box_append(list_box, entry_button);
+    }
+}
+
+void sshyp_sync() {
+    system("sshyp sync");
+    entry_array_count = 0;
+    entry_list_gen();
 }
 
 static void activate(GtkApplication* app) {
@@ -108,8 +186,7 @@ static void activate(GtkApplication* app) {
     GtkWidget *box_info, *sshyp_logo, *label_home1;  // info page widgets
     GtkWidget *box_browse_page, *box_browse_controls;  // browse page boxes
     GtkWidget *button_shear, *button_read, *button_edit, *button_copy;  // browse buttons
-    GtkWidget *label_selected; char *button_label;  // selected entry label, modifiable button label
-    GtkWidget *scrollable, *entry_button; GtkListBox *list_box;  // scrollable entry list widgets
+    GtkWidget *scrollable;  // scrollable entry list container
 
     window = gtk_application_window_new(app);
     gtk_window_set_title(GTK_WINDOW(window), "");
@@ -117,18 +194,6 @@ static void activate(GtkApplication* app) {
 
     header_bar = gtk_header_bar_new();
         gtk_header_bar_set_show_title_buttons(GTK_HEADER_BAR(header_bar), FALSE);
-
-    button_sync = gtk_button_new_from_icon_name("view-refresh");
-    g_signal_connect(button_sync, "clicked", G_CALLBACK(sshyp_sync), 0);
-    gtk_header_bar_pack_end(GTK_HEADER_BAR(header_bar), button_sync);
-
-    button_unlock = gtk_button_new_from_icon_name("changes-allow");
-    g_signal_connect_swapped(button_unlock, "clicked", G_CALLBACK(password_prompt), window);
-    gtk_header_bar_pack_end(GTK_HEADER_BAR(header_bar), button_unlock);
-
-    //GtkWidget *button_debug = gtk_button_new_from_icon_name("applications-science");
-    //g_signal_connect(button_debug, "clicked", G_CALLBACK(0), 0);
-    //gtk_header_bar_pack_end(GTK_HEADER_BAR(header_bar), button_debug);
 
     // !!start main stack stuff!!
 
@@ -165,29 +230,15 @@ static void activate(GtkApplication* app) {
         gtk_box_append(GTK_BOX(box_browse_page), label_selected);
         gtk_box_append(GTK_BOX(box_browse_page), box_browse_controls);
 
-        // SCROLLABLE METHOD
+        // !!start scrollable list!!
         scrollable = gtk_scrolled_window_new();
             list_box = (GtkListBox *) gtk_list_box_new();
                 gtk_widget_set_vexpand(GTK_WIDGET(list_box), TRUE);
 
-                button_label = "/test/test1";
-                entry_button = gtk_button_new_with_label(button_label);
-                gtk_label_set_xalign(GTK_LABEL(gtk_button_get_child(GTK_BUTTON(entry_button))), GTK_JUSTIFY_LEFT);
-                    gtk_button_set_has_frame(GTK_BUTTON(entry_button), FALSE);
-                    g_signal_connect(entry_button, "clicked", G_CALLBACK(set_selection_label), (gpointer *)label_selected);
-                gtk_list_box_append(list_box, gtk_separator_new(GTK_ORIENTATION_HORIZONTAL));
-                gtk_list_box_append(list_box, entry_button);
-
-                button_label = "/test/test2";
-                entry_button = gtk_button_new_with_label(button_label);
-                gtk_label_set_xalign(GTK_LABEL(gtk_button_get_child(GTK_BUTTON(entry_button))), GTK_JUSTIFY_LEFT);
-                    gtk_button_set_has_frame(GTK_BUTTON(entry_button), FALSE);
-                    g_signal_connect(entry_button, "clicked", G_CALLBACK(set_selection_label), (gpointer *)label_selected);
-                gtk_list_box_append(list_box, gtk_separator_new(GTK_ORIENTATION_HORIZONTAL));
-                gtk_list_box_append(list_box, entry_button);
+                entry_list_gen();
 
             gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(scrollable), GTK_WIDGET(list_box));
-        // END SCROLLABLE METHOD
+        // !!end scrollable list!!
 
         gtk_box_append(GTK_BOX(box_browse_page), GTK_WIDGET(scrollable));
 
@@ -210,17 +261,28 @@ static void activate(GtkApplication* app) {
 
     // !!end main stack stuff!!
 
+    // header bar buttons
+    button_sync = gtk_button_new_from_icon_name("view-refresh");
+        g_signal_connect(button_sync, "clicked", G_CALLBACK(sshyp_sync), 0);
+    gtk_header_bar_pack_end(GTK_HEADER_BAR(header_bar), button_sync);
+
+    button_unlock = gtk_button_new_from_icon_name("changes-allow");
+        g_signal_connect_swapped(button_unlock, "clicked", G_CALLBACK(password_prompt), window);
+    gtk_header_bar_pack_end(GTK_HEADER_BAR(header_bar), button_unlock);
+
+    //GtkWidget *button_debug = gtk_button_new_from_icon_name("applications-science");
+        //g_signal_connect(button_debug, "clicked", G_CALLBACK(0), 0);
+    //gtk_header_bar_pack_end(GTK_HEADER_BAR(header_bar), button_debug);
+
     gtk_window_set_titlebar(GTK_WINDOW(window), header_bar);
     gtk_widget_show(window);
 }
 
 int main(int    argc,
       char **argv) {
-    GtkApplication *app;
-    int status;
-    app = gtk_application_new("org.rwinkhart.sshyp", G_APPLICATION_FLAGS_NONE);
+    GtkApplication *app = gtk_application_new("org.rwinkhart.sshyp", G_APPLICATION_FLAGS_NONE);
     g_signal_connect(app, "activate", G_CALLBACK(activate), 0);
-    status = g_application_run(G_APPLICATION(app), argc, argv);
+    int status = g_application_run(G_APPLICATION(app), argc, argv);
     g_object_unref(app);
     return status;
 }
