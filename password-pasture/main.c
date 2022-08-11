@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <gtk/gtk.h>
 
-GtkWidget *label_selected; GtkListBox *list_box;  // TODO remove necessity for global widgets
+GtkWidget *label_selected; GtkListBox *list_box;
 char entries[1024][1024]; int entry_array_count = 0;
 
 void str_remove(char *str, const char *sub) {
@@ -103,10 +103,28 @@ void password_prompt(GtkWindow *window) {
         g_signal_connect_swapped(button_lock, "clicked", G_CALLBACK(gtk_window_close), dialog);
 }
 
-void copy_edit_field_prompt(GtkWindow *window) {
+void copy_item(GtkWidget *button) {
+    char *command = malloc(2048); const char *button_label = gtk_button_get_label(GTK_BUTTON(button));
+    strcpy(command, "sshyp copy ");
+    strcat(command, button_label); strcat(command, " ");
+    strcat(command, gtk_label_get_text((GtkLabel *) label_selected));
+    system(command);
+    free(command);
+}
+
+void copy_edit_field_prompt(GtkWidget *button, gpointer *window) {
     GtkWidget *dialog, *dialog_header;  // main window and header bar
     GtkWidget *button_cancel;  // header bar buttons
     GtkWidget *content_area, *button_pwd, *button_usr, *button_url, *button_nte, *button_mfa;  // content area and widgets
+    int mode;  // copy/edit mode flag
+
+    // set mode based on button pressed, copy = 1, edit = 2
+    const char *button_label = gtk_button_get_icon_name(GTK_BUTTON(button));
+    if (strcmp(button_label, "edit-copy") == 0) {
+        mode = 1;
+    } else {
+        mode = 2;
+    }
 
     dialog = gtk_dialog_new();
         dialog_header = gtk_header_bar_new();
@@ -135,6 +153,14 @@ void copy_edit_field_prompt(GtkWindow *window) {
         gtk_widget_show(dialog);
 
         // button actions
+        if (mode == 1) {
+            g_signal_connect(button_pwd, "clicked", G_CALLBACK(copy_item), 0);
+            g_signal_connect(button_usr, "clicked", G_CALLBACK(copy_item), 0);
+            g_signal_connect(button_url, "clicked", G_CALLBACK(copy_item), 0);
+            g_signal_connect(button_nte, "clicked", G_CALLBACK(copy_item), 0);
+            g_signal_connect(button_mfa, "clicked", G_CALLBACK(copy_item), 0);
+        }
+
         g_signal_connect_swapped(button_cancel, "clicked", G_CALLBACK(gtk_window_close), dialog);
         g_signal_connect_swapped(button_pwd, "clicked", G_CALLBACK(gtk_window_close), dialog);
         g_signal_connect_swapped(button_usr, "clicked", G_CALLBACK(gtk_window_close), dialog);
@@ -163,7 +189,7 @@ void entry_list_gen() {
     gen_entry_array(path, sizeof path, path_orig);
 
     // bubble sort entries array
-    char *temp; temp = (char *) malloc(1024);
+    char *temp = (char *) malloc(1024);
     for(int i=0; i<entry_array_count; i++){
         for(int j=0; j<entry_array_count-1-i; j++){
             if(strcmp(entries[j], entries[j+1]) > 0){
@@ -226,10 +252,10 @@ static void activate(GtkApplication* app) {
         gtk_widget_set_hexpand(button_read, TRUE);
     button_edit = gtk_button_new_from_icon_name("document-edit");
         gtk_widget_set_hexpand(button_edit, TRUE);
-        g_signal_connect_swapped(button_edit, "clicked", G_CALLBACK(copy_edit_field_prompt), window);
+        g_signal_connect(button_edit, "clicked", G_CALLBACK(copy_edit_field_prompt), (gpointer *) window);
     button_copy = gtk_button_new_from_icon_name("edit-copy");
-        g_signal_connect_swapped(button_copy, "clicked", G_CALLBACK(copy_edit_field_prompt), window);
         gtk_widget_set_hexpand(button_copy, TRUE);
+        g_signal_connect(button_copy, "clicked", G_CALLBACK(copy_edit_field_prompt), (gpointer *) window);
     box_browse_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
         label_selected = gtk_label_new("no entry selected");
         gtk_widget_set_hexpand(label_selected, TRUE);
