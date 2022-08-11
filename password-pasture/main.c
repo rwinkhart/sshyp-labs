@@ -53,9 +53,10 @@ void gen_entry_array(char *path, size_t size, const char *path_orig) {
 
 void password_convert(GtkEntryBuffer *buffer) {
     const char *password = gtk_entry_buffer_get_text(buffer);
-    char *sub1 = "gpg --pinentry-mode loopback --batch --passphrase-fd 0 --armor -qd --output /dev/null ~/.config/sshyp/lock.gpg <<< '", *sub2 = "'", command[1024];
+    char *sub1 = "gpg --pinentry-mode loopback --batch --passphrase-fd 0 --armor -qd --output /dev/null ~/.config/sshyp/lock.gpg <<< '", *sub2 = "'", *command = (char *) malloc(2048);
     strcpy(command, sub1); strcat(command, password); strcat(command, sub2);
     system(command);
+    free(command);
 }
 
 void gpg_lock() {
@@ -219,6 +220,56 @@ void sshyp_sync() {
     entry_list_gen();
 }
 
+void delete_entry() {
+    char *command = (char *) malloc(2048);
+    strcpy(command, "sshyp shear "); strcat(command, gtk_label_get_text(GTK_LABEL(label_selected)));
+    system(command);
+    free(command);
+    entry_array_count = 0;
+    entry_list_gen();
+}
+
+void are_they_sure(GtkWindow *window) {
+    GtkWidget *dialog, *dialog_header, *box_header;  // main window and header bar
+    GtkWidget *button_delete, *button_cancel;  // header bar buttons
+    GtkWidget *content_area, *label_sure;  // content area and widgets
+
+    dialog = gtk_dialog_new();
+        dialog_header = gtk_header_bar_new();
+            gtk_header_bar_set_show_title_buttons(GTK_HEADER_BAR(dialog_header), FALSE);
+            box_header = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+                gtk_widget_set_halign(box_header, GTK_ALIGN_CENTER);
+                button_delete = gtk_button_new_with_label("delete");
+                button_cancel = gtk_button_new_with_label("cancel");
+                gtk_box_append(GTK_BOX(box_header), button_delete);
+                gtk_box_append(GTK_BOX(box_header), button_cancel);
+            gtk_header_bar_set_title_widget(GTK_HEADER_BAR(dialog_header), box_header);
+        gtk_window_set_title(GTK_WINDOW(dialog), "");
+        gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(window));
+        gtk_window_set_modal(GTK_WINDOW(dialog), TRUE);
+        gtk_window_set_default_size(GTK_WINDOW(dialog), 50, 50);
+
+    // add label to dialog content area
+    content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+        gtk_widget_set_halign(content_area, GTK_ALIGN_CENTER);
+        char *label_text = malloc(2048);
+        strcpy(label_text, "this will delete:\n");
+        strcat(label_text, gtk_label_get_text(GTK_LABEL(label_selected)));
+        strcat(label_text, "\nare you sure?");
+        label_sure = gtk_label_new(label_text);
+        free(label_text);
+        gtk_label_set_justify(GTK_LABEL(label_sure), GTK_JUSTIFY_CENTER);
+        gtk_box_append(GTK_BOX(content_area), label_sure);
+
+    // button actions
+    g_signal_connect(button_delete, "clicked", G_CALLBACK(delete_entry), 0);
+    g_signal_connect_swapped(button_delete, "clicked", G_CALLBACK(gtk_window_close), dialog);
+    g_signal_connect_swapped(button_cancel, "clicked", G_CALLBACK(gtk_window_close), dialog);
+
+    gtk_window_set_titlebar(GTK_WINDOW(dialog), dialog_header);
+    gtk_widget_show(dialog);
+}
+
 static void activate(GtkApplication* app) {
     GtkWidget *window, *header_bar;  // main window and header bar
     GtkWidget *button_sync, *button_unlock;  // header bar buttons
@@ -248,6 +299,7 @@ static void activate(GtkApplication* app) {
     button_shear = gtk_button_new_from_icon_name("edit-delete");
         gtk_widget_set_hexpand(button_shear, FALSE);
         gtk_widget_set_size_request(button_shear, 50, -1);
+        g_signal_connect_swapped(button_shear, "clicked", G_CALLBACK(are_they_sure), window);
     button_read = gtk_button_new_from_icon_name("mail-read");
         gtk_widget_set_hexpand(button_read, TRUE);
     button_edit = gtk_button_new_from_icon_name("document-edit");
