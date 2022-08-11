@@ -161,10 +161,24 @@ void entry_list_gen() {
     char path[1024]; char *user_home = getenv("HOME"); strcpy(path, user_home); strcat(path, "/.local/share/sshyp");
     char path_orig[1024]; strcpy(path_orig, path); strcat(path_orig, "/");
     gen_entry_array(path, sizeof path, path_orig);
+
+    // bubble sort entries array
+    char *temp; temp = (char *) malloc(1024);
+    for(int i=0; i<entry_array_count; i++){
+        for(int j=0; j<entry_array_count-1-i; j++){
+            if(strcmp(entries[j], entries[j+1]) > 0){
+                strcpy(temp, entries[j]);
+                strcpy(entries[j], entries[j+1]);
+                strcpy(entries[j+1], temp);
+            }
+        }
+    }
+    free(temp);
+
     strcpy(entries[entry_array_count], "\0");
 
-    for (int i = 0; strcmp(entries[i], "\0") != 0; i++) {
-        entry_button = gtk_button_new_with_label(entries[i]);
+    for (int i_2 = 0; strcmp(entries[i_2], "\0") != 0; i_2++) {
+        entry_button = gtk_button_new_with_label(entries[i_2]);
         gtk_label_set_xalign(GTK_LABEL(gtk_button_get_child(GTK_BUTTON(entry_button))), GTK_JUSTIFY_LEFT);
         gtk_button_set_has_frame(GTK_BUTTON(entry_button), FALSE);
         g_signal_connect(entry_button, "clicked", G_CALLBACK(set_selection_label), (gpointer *)label_selected);
