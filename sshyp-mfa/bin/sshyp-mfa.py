@@ -10,10 +10,6 @@ from sshyp import decrypt, entry_list_gen, shm_gen
 from struct import pack, unpack
 from sys import argv, exit as s_exit
 from time import sleep, strftime, time
-try:
-    from steam.guard import generate_twofactor_code as steam_totp
-except (ModuleNotFoundError, ImportError):
-    pass
 
 
 def totp(_secret, _algo, _digits, _period):  # uses provided information to generate a standard totp key
@@ -30,7 +26,7 @@ def mfa_read_shortcut():  # reads and extracts MFA info from the user-specified 
         print(f"\n\u001b[38;5;9merror: entry ({argument}) does not exist\u001b[0m\n")
         s_exit(1)
     _shm_folder, _shm_entry = shm_gen()
-    decrypt(directory + argument, _shm_folder, _shm_entry, gpg)
+    decrypt(directory + argument, _shm_folder, _shm_entry, gpg, quick_unlock_status)
     try:
         _mfa_data = open(f"{path.expanduser('~/.config/sshyp/tmp/')}{_shm_folder}/{_shm_entry}", 'r').readlines()
         _type = _mfa_data[4].split('otpauth://')[1].split('/')[0]
@@ -54,6 +50,7 @@ if __name__ == '__main__':
         s_exit(1)
 
     # user data fetcher
+    quick_unlock_status = open(path.expanduser('~/.config/sshyp/sshyp-data')).readlines()[3].rstrip()
     ssh_info = get_profile(path.expanduser('~/.config/sshyp/sshyp.sshync'))
     directory = str(ssh_info[3].replace('\n', ''))
     if uname()[0] == 'Haiku':  # set proper gpg command for OS
@@ -75,6 +72,7 @@ if __name__ == '__main__':
                 if copied is None:
                     copied = 1
                 if mfa_data[0] == 'steam':
+                    from steam.guard import generate_twofactor_code as steam_totp
                     _mfa_key = steam_totp(b32decode(mfa_data[1]))
                 else:
                     _mfa_key = totp(mfa_data[1], mfa_data[2], mfa_data[3], mfa_data[4])
@@ -89,4 +87,4 @@ if __name__ == '__main__':
             sleep(1)
     except KeyboardInterrupt:
         print('\n')
-        s_exit()
+        s_exit(0)
