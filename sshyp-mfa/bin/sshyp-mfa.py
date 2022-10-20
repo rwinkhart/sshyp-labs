@@ -6,7 +6,7 @@ from os import environ, path, system, uname
 from pathlib import Path
 from shutil import rmtree
 from sshync import get_profile
-from sshyp import decrypt, entry_list_gen, shm_gen
+from sshyp import decrypt, entry_list_gen, shm_gen, whitelist_verify
 from struct import pack, unpack
 from sys import argv, exit as s_exit
 from time import sleep, strftime, time
@@ -26,7 +26,10 @@ def mfa_read_shortcut():  # reads and extracts MFA info from the user-specified 
         print(f"\n\u001b[38;5;9merror: entry ({argument}) does not exist\u001b[0m\n")
         s_exit(1)
     _shm_folder, _shm_entry = shm_gen()
-    decrypt(directory + argument, _shm_folder, _shm_entry, gpg, quick_unlock_status)
+    if quick_unlock_enabled == 'y':
+        decrypt(directory + argument, _shm_folder, _shm_entry, gpg, whitelist_verify(port, username_ssh, ip))
+    else:
+        decrypt(directory + argument, _shm_folder, _shm_entry, gpg, False)
     try:
         _mfa_data = open(f"{path.expanduser('~/.config/sshyp/tmp/')}{_shm_folder}/{_shm_entry}", 'r').readlines()
         _type = _mfa_data[4].split('otpauth://')[1].split('/')[0]
@@ -50,15 +53,18 @@ if __name__ == '__main__':
         s_exit(1)
 
     # user data fetcher
-    quick_unlock_status = open(path.expanduser('~/.config/sshyp/sshyp-data')).readlines()[3].rstrip()
+    quick_unlock_enabled = open(path.expanduser('~/.config/sshyp/sshyp-data')).readlines()[3].rstrip()
     ssh_info = get_profile(path.expanduser('~/.config/sshyp/sshyp.sshync'))
-    directory = str(ssh_info[3].replace('\n', ''))
+    username_ssh = str(ssh_info[0].rstrip())
+    ip = str(ssh_info[1].rstrip())
+    port = str(ssh_info[2].rstrip())
+    directory = str(ssh_info[3].rstrip())
     if uname()[0] == 'Haiku':  # set proper gpg command for OS
         gpg = 'gpg --pinentry-mode loopback'
     else:
         gpg = 'gpg'
 
-    # main process; runs functions to generate MFA key, then continuously copies up-to-date MFA key to clipboard
+    # main process: runs functions to generate MFA key, then continuously copies up-to-date MFA key to clipboard
     try:
         if len(argument_list) == 1:
             entry_list_gen()
