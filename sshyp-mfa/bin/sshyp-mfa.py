@@ -2,7 +2,7 @@
 
 from base64 import b32decode
 from hmac import new as new_mac
-from os import environ, path, system, uname
+from os import environ, listdir, path, system, uname
 from pathlib import Path
 from shutil import rmtree
 from sshync import get_profile
@@ -27,7 +27,7 @@ def mfa_read_shortcut():  # reads and extracts MFA info from the user-specified 
         s_exit(1)
     _shm_folder, _shm_entry = shm_gen()
     if quick_unlock_enabled == 'y':
-        decrypt(directory + argument, _shm_folder, _shm_entry, gpg, whitelist_verify(port, username_ssh, ip))
+        decrypt(directory + argument, _shm_folder, _shm_entry, gpg, whitelist_verify(port, username_ssh, ip, device_id))
     else:
         decrypt(directory + argument, _shm_folder, _shm_entry, gpg, False)
     try:
@@ -53,6 +53,7 @@ if __name__ == '__main__':
         s_exit(1)
 
     # user data fetcher
+    device_id = listdir(path.expanduser('~/.config/sshyp/devices'))[0]
     quick_unlock_enabled = open(path.expanduser('~/.config/sshyp/sshyp-data')).readlines()[3].rstrip()
     ssh_info = get_profile(path.expanduser('~/.config/sshyp/sshyp.sshync'))
     username_ssh = str(ssh_info[0].rstrip())
