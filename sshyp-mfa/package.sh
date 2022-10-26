@@ -1,40 +1,79 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# This script packages sshyp-mfa (from source) for various UNIX(-like) environments.
-# Dependencies (Arch Linux): dpkg (packaging for Debian/Termux), freebsd-pkg (packaging for FreeBSD)
-# Dependencies (Fedora) (can only package for self): rpmdevtools
-# Dependencies (Alpine): xz (not part of a basic installation, needed for generic package creation and unpacking for abuild), alpine-sdk (required to build the .apk file from the generated APKBUILD), bash
-# NOTE It is recommended to instead use the latest officially packaged and tagged release.
-
-echo -e '\nOptions (please enter the number only):'
-echo -e '\nPackage Formats:\n\n1. Haiku\n2. Debian&Ubuntu Linux\n3. Fedora Linux\n4. FreeBSD\n5. Termux\n6. Generic (used for PKGBUILD/APKBUILD)'
-echo -e '\nBuild Scripts:\n\n7. Arch Linux (PKGBUILD)\n8. Alpine Linux (APKBUILD)'
-echo -e '\nOther:\n\n9. All (generates all distribution packages (excluding Haiku, Fedora, and Alpine, as these must be packaged on their respective distributions) and build scripts)\n'
-read -n 1 -r -p "Distribution: " distro
-
-echo -e '\n\nThe value entered in this field will only affect the version reported to the package manager. The latest source is used regardless.\n'
-read -r -p "Version number: " version
-
-echo -e '\nThe value entered in this field will only affect the revision number for build scripts.\n'
-read -r -p "Revision number: " revision
-
-if [ "$distro" == "7" ] || [ "$distro" == "8" ] || [ "$distro" == "9" ]; then
-    echo -e '\nOptions (please enter the number only):'
-    echo -e '\n1. GitHub Release Tag\n2. Local\n'
-    read -r -p "Source (for build scripts): " source
-
-    if [ "$source" == "1" ]; then
-        source='https://github.com/rwinkhart/sshyp-labs/releases/download/v$pkgver/sshyp-mfa-$pkgver.tar.xz'
-    else
-        source=local://sshyp-mfa-"$version".tar.xz
-    fi
+version=$(sed -n '1{p;q}' ../version)
+if [ -z "$2" ]; then
+    revision=1
+else
+    revision="$2"
 fi
 
-mkdir -p packages
+_create_generic() {
+    echo -e '\npackaging as generic...\n'
+    mkdir -p output/generictemp/usr/share/man/man1
+    cp -r bin output/generictemp/usr/
+    ln -s /usr/bin/sshyp-mfa.py output/generictemp/usr/bin/sshyp-mfa
+    cp -r share output/generictemp/usr/
+    cp extra/manpage output/generictemp/usr/share/man/man1/sshyp-mfa.1
+    gzip output/generictemp/usr/share/man/man1/sshyp-mfa.1
+    tar -C output/generictemp -cvJf output/sshyp-mfa-"$version".tar.xz usr/
+    rm -rf output/generictemp
+    sha512="$(sha512sum output/sshyp-mfa-"$version".tar.xz | awk '{print $1;}')"
+    echo -e "\nsha512 sum:\n$sha512"
+    echo -e "\ngeneric packaging complete\n"
+} &&
 
-if [ "$distro" == "1" ]; then
-    echo -e '\nPackaging for Haiku...\n'
-    mkdir -p packages/haikutemp/documentation/{man/man1,packages/sshyp-mfa}
+_create_pkgbuild() {
+    echo -e '\ngenerating PKGBUILD...'
+    echo "# Maintainer: Randall Winkhart <idgr at tutanota dot com>
+pkgname=sshyp-mfa
+pkgver="$version"
+pkgrel="$revision"
+pkgdesc='An MFA (TOTP/Steam) key generator for the sshyp password manager'
+url='https://github.com/rwinkhart/sshyp-labs'
+arch=('any')
+license=('GPL-3.0-only')
+depends=(sshyp python)
+source=(\""$source"\")
+sha512sums=('"$sha512"')
+
+package() {
+
+    tar xf sshyp-mfa-"\"\$pkgver\"".tar.xz -C "\"\${pkgdir}\""
+
+}
+" > output/PKGBUILD
+    echo -e "\nPKGBUILD generated\n"
+} &&
+
+_create_apkbuild() {
+    echo -e '\ngenerating APKBUILD...'
+    echo "# Maintainer: Randall Winkhart <idgr@tutanota.com>
+pkgname=sshyp-mfa
+pkgver="$version"
+pkgrel="$revision"
+pkgdesc='An MFA (TOTP/Steam) key generator for the sshyp password manager'
+options=!check
+url='https://github.com/rwinkhart/sshyp-labs'
+arch='noarch'
+license='GPL-3.0-only'
+depends='sshyp python3'
+source=\""$source"\"
+
+package() {
+    mkdir -p "\"\$pkgdir\""
+    cp -r "\"\$srcdir/usr/"\" "\"\$pkgdir\""
+}
+
+sha512sums=\"
+"$sha512'  'sshyp-mfa\"\$pkgver\".tar.xz"
+\"
+" > output/APKBUILD
+    echo -e "\nAPKBUILD generated\n"
+} &&
+
+_create_hpkg() {
+    echo -e '\npackaging for Haiku...\n'
+    mkdir -p output/haikutemp/documentation/{man/man1,output/sshyp-mfa}
     echo "name			sshypmfa
 version			"$version"-"$revision"
 architecture		any
@@ -43,7 +82,7 @@ description		\"sshyp-mfa is an extension for the sshyp password manager that rea
 packager		\"Randall Winkhart <idgr at tutanota dot com>\"
 vendor			\"Randall Winkhart\"
 licenses {
-	\"GNU GPL v3\"
+		\"GPL-3.0-only\"
 }
 copyrights {
 	\"2021-2022 Randall Winkhart\"
@@ -59,25 +98,25 @@ requires {
 urls {
 	\"https://github.com/rwinkhart/sshyp-labs\"
 }
-" > packages/haikutemp/.PackageInfo
-    cp -r bin packages/haikutemp/
-    sed -i '1 s/.*/#!\/bin\/env\ python3/' packages/haikutemp/bin/sshyp-mfa.py
-    ln -s /bin/sshyp-mfa.py packages/haikutemp/bin/sshyp-mfa
-    cp -r share/licenses/sshyp-mfa/ packages/haikutemp/documentation/packages/
-    cp extra/manpage packages/haikutemp/documentation/man/man1/sshyp-mfa.1
-    gzip packages/haikutemp/documentation/man/man1/sshyp-mfa.1
-    cd packages/haikutemp
+" > output/haikutemp/.PackageInfo
+    cp -r bin output/haikutemp/
+    sed -i '1 s/.*/#!\/bin\/env\ python3/' output/haikutemp/bin/sshyp-mfa.py
+    ln -s /bin/sshyp-mfa.py output/haikutemp/bin/sshyp-mfa
+    cp -r share/licenses/sshyp-mfa/ output/haikutemp/documentation/output/
+    cp extra/manpage output/haikutemp/documentation/man/man1/sshyp-mfa.1
+    gzip output/haikutemp/documentation/man/man1/sshyp-mfa.1
+    cd output/haikutemp
     package create -b sshyp-mfa-"$version"-"$revision"_all.hpkg
     package add sshyp-mfa-"$version"-"$revision"_all.hpkg bin documentation
     cd ../..
-    mv packages/haikutemp/sshyp-mfa-"$version"-"$revision"_all.hpkg packages/
-    rm -rf packages/haikutemp
-    echo -e "\nHaiku packaging complete.\n"
-fi
+    mv output/haikutemp/sshyp-mfa-"$version"-"$revision"_all.hpkg output/
+    rm -rf output/haikutemp
+    echo -e "\nHaiku packaging complete\n"
+} &&
 
-if [ "$distro" == "2" ] || [ "$distro" == "9" ]; then
-    echo -e '\nPackaging for Debian...\n'
-    mkdir -p packages/debiantemp/sshyp-mfa_"$version"-"$revision"_all/{DEBIAN,usr/share/man/man1}
+_create_deb() {
+    echo -e '\npackaging for Debian/Ubuntu...\n'
+    mkdir -p output/debiantemp/sshyp-mfa_"$version"-"$revision"_all/{DEBIAN,usr/share/man/man1}
     echo "Package: sshyp-mfa
 Version: $version
 Section: utils
@@ -87,21 +126,21 @@ Description: An MFA (TOTP/Steam) key generator for the sshyp password manager
 Depends: sshyp, python3
 Priority: optional
 Installed-Size: 100
-" > packages/debiantemp/sshyp-mfa_"$version"-"$revision"_all/DEBIAN/control
-    cp -r bin packages/debiantemp/sshyp-mfa_"$version"-"$revision"_all/usr/
-    ln -s /usr/bin/sshyp-mfa.py packages/debiantemp/sshyp-mfa_"$version"-"$revision"_all/usr/bin/sshyp-mfa
-    cp -r share packages/debiantemp/sshyp-mfa_"$version"-"$revision"_all/usr/
-    cp extra/manpage packages/debiantemp/sshyp-mfa_"$version"-"$revision"_all/usr/share/man/man1/sshyp-mfa.1
-    gzip packages/debiantemp/sshyp-mfa_"$version"-"$revision"_all/usr/share/man/man1/sshyp-mfa.1
-    dpkg-deb --build --root-owner-group packages/debiantemp/sshyp-mfa_"$version"-"$revision"_all/
-    mv packages/debiantemp/sshyp-mfa_"$version"-"$revision"_all.deb packages/
-    rm -rf packages/debiantemp
-    echo -e "\nDebian packaging complete.\n"
-fi
+" > output/debiantemp/sshyp-mfa_"$version"-"$revision"_all/DEBIAN/control
+    cp -r bin output/debiantemp/sshyp-mfa_"$version"-"$revision"_all/usr/
+    ln -s /usr/bin/sshyp-mfa.py output/debiantemp/sshyp-mfa_"$version"-"$revision"_all/usr/bin/sshyp-mfa
+    cp -r share output/debiantemp/sshyp-mfa_"$version"-"$revision"_all/usr/
+    cp extra/manpage output/debiantemp/sshyp-mfa_"$version"-"$revision"_all/usr/share/man/man1/sshyp-mfa.1
+    gzip output/debiantemp/sshyp-mfa_"$version"-"$revision"_all/usr/share/man/man1/sshyp-mfa.1
+    dpkg-deb --build --root-owner-group output/debiantemp/sshyp-mfa_"$version"-"$revision"_all/
+    mv output/debiantemp/sshyp-mfa_"$version"-"$revision"_all.deb output/
+    rm -rf output/debiantemp
+    echo -e "\nDebian/Ubuntu packaging complete\n"
+} &&
 
-if [ "$distro" == "5" ] || [ "$distro" == "9" ]; then
-    echo -e '\nPackaging for Termux...\n'
-    mkdir -p packages/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/{data/data/com.termux/files/usr/share/man/man1,DEBIAN}
+_create_termux() {
+    echo -e '\npackaging for Termux...\n'
+    mkdir -p output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/{data/data/com.termux/files/usr/share/man/man1,DEBIAN}
     echo "Package: sshyp-mfa
 Version: $version
 Section: utils
@@ -111,45 +150,30 @@ Description: An MFA (TOTP/Steam) key generator for the sshyp password manager
 Depends: sshyp, python3
 Priority: optional
 Installed-Size: 100
-" > packages/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/DEBIAN/control
-    cp -r bin packages/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/
-    ln -s /data/data/com.termux/files/usr/bin/sshyp-mfa.py packages/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/bin/sshyp-mfa
-    cp -r share packages/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/
-    cp extra/manpage packages/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/share/man/man1/sshyp-mfa.1
-    gzip packages/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/share/man/man1/sshyp-mfa.1
-    dpkg-deb --build --root-owner-group packages/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/
-    mv packages/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux.deb packages/
-    rm -rf packages/termuxtemp
-    echo -e "\nTermux packaging complete.\n"
-fi
+" > output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/DEBIAN/control
+    cp -r bin output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/
+    ln -s /data/data/com.termux/files/usr/bin/sshyp-mfa.py output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/bin/sshyp-mfa
+    cp -r share output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/
+    cp extra/manpage output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/share/man/man1/sshyp-mfa.1
+    gzip output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/share/man/man1/sshyp-mfa.1
+    dpkg-deb --build --root-owner-group output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/
+    mv output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux.deb output/
+    rm -rf output/termuxtemp
+    echo -e "\nTermux packaging complete\n"
+} &&
 
-if [ "$distro" == "3" ] || [ "$distro" == "4" ] || [ "$distro" == "6" ] || [ "$distro" == "7" ] || [ "$distro" == "8" ] || [ "$distro" == "9" ]; then
-    echo -e '\nPackaging as generic...\n'
-    mkdir -p packages/generictemp/usr/share/man/man1
-    cp -r bin packages/generictemp/usr/
-    ln -s /usr/bin/sshyp-mfa.py packages/generictemp/usr/bin/sshyp-mfa
-    cp -r share packages/generictemp/usr/
-    cp extra/manpage packages/generictemp/usr/share/man/man1/sshyp-mfa.1
-    gzip packages/generictemp/usr/share/man/man1/sshyp-mfa.1
-    tar -C packages/generictemp -cvJf packages/sshyp-mfa-"$version".tar.xz usr/
-    rm -rf packages/generictemp
-    sha512="$(sha512sum packages/sshyp-mfa-"$version".tar.xz | awk '{print $1;}')"
-    echo -e "\nsha512 sum:\n$sha512"
-    echo -e "\nGeneric packaging complete.\n"
-fi
-
-if [ "$distro" == "3" ]; then
-    echo -e '\nPackaging for Fedora...\n'
+_create_rpm() {
+    echo -e '\npackaging for Fedora...\n'
     rm -rf ~/rpmbuild
     rpmdev-setuptree
-    cp packages/sshyp-mfa-"$version".tar.xz ~/rpmbuild/SOURCES
+    cp output/sshyp-mfa-"$version".tar.xz ~/rpmbuild/SOURCES
     echo "Name:           sshyp-mfa
 Version:        "$version"
 Release:        "$revision"
 Summary:        An MFA (TOTP/Steam) key generator for the sshyp password manager
 BuildArch:      noarch
 
-License:        GPLv3
+License:        GPL-3.0-only
 URL:            https://github.com/rwinkhart/sshyp-labs
 Source0:        sshyp-mfa-"$version".tar.xz
 
@@ -169,15 +193,15 @@ cp -r %{_sourcedir}/usr %{buildroot}
 %doc /usr/share/man/man1/sshyp-mfa.1.gz
 " > ~/rpmbuild/SPECS/sshyp-mfa.spec
 rpmbuild -bb ~/rpmbuild/SPECS/sshyp-mfa.spec
-mv ~/rpmbuild/RPMS/noarch/* packages/
+mv ~/rpmbuild/RPMS/noarch/* output/
 rm -rf ~/rpmbuild
-echo -e "\nFedora packaging complete.\n"
-fi
+echo -e "\nFedora packaging complete\n"
+} &&
 
-if [ "$distro" == "4" ] || [ "$distro" == "9" ]; then
-    echo -e '\nPackaging for FreeBSD...\n'
-    mkdir -p packages/FreeBSDtemp/bin
-    tar xf packages/sshyp-mfa-"$version".tar.xz -C packages/FreeBSDtemp
+_create_freebsd_pkg() {
+    echo -e '\npackaging for FreeBSD...\n'
+    mkdir -p output/FreeBSDtemp/bin
+    tar xf output/sshyp-mfa-"$version".tar.xz -C output/FreeBSDtemp
     echo "name: sshyp-mfa
 version: \""$version"\"
 abi = \"FreeBSD:13:*\";
@@ -196,61 +220,40 @@ prefix: /
                       \"origin\" : \"lang/python\"
                    },
                 },
-" > packages/FreeBSDtemp/+MANIFEST
+" > output/FreeBSDtemp/+MANIFEST
 echo "/usr/bin/sshyp-mfa
 /usr/bin/sshyp-mfa.py
 /usr/share/licenses/sshyp-mfa/license
 /usr/share/man/man1/sshyp-mfa.1.gz
-" > packages/FreeBSDtemp/plist
-pkg create -m packages/FreeBSDtemp/ -r packages/FreeBSDtemp/ -p packages/FreeBSDtemp/plist -o packages/
-rm -rf packages/FreeBSDtemp
-echo -e "\nFreeBSD packaging complete.\n"
-fi
+" > output/FreeBSDtemp/plist
+pkg create -m output/FreeBSDtemp/ -r output/FreeBSDtemp/ -p output/FreeBSDtemp/plist -o output/
+rm -rf output/FreeBSDtemp
+echo -e "\nFreeBSD packaging complete\n"
+} &&
 
-if [ "$distro" == "7" ] || [ "$distro" == "9" ]; then
-    echo -e '\nGenerating PKGBUILD...'
-    echo "# Maintainer: Randall Winkhart <idgr at tutanota dot com>
-pkgname=sshyp-mfa
-pkgver="$version"
-pkgrel="$revision"
-pkgdesc='An MFA (TOTP/Steam) key generator for the sshyp password manager'
-url='https://github.com/rwinkhart/sshyp-labs'
-arch=('any')
-license=('GPL3')
-depends=(sshyp python)
-
-source=(\""$source"\")
-sha512sums=('"$sha512"')
-
-package() {
-
-    tar xf sshyp-mfa-"\"\$pkgver\"".tar.xz -C "\"\${pkgdir}\""
-
-}
-" > packages/PKGBUILD
-    echo -e "\nPKGBUILD generated.\n"
-fi
-
-if [ "$distro" == "8" ] || [ "$distro" == "9" ]; then
-    echo -e '\nGenerating APKBUILD...'
-    echo "# Maintainer: Randall Winkhart <idgr@tutanota.com>
-pkgname=sshyp-mfa
-pkgver="$version"
-pkgrel="$revision"
-pkgdesc='An MFA (TOTP/Steam) key generator for the sshyp password manager'
-options=!check
-url='https://github.com/rwinkhart/sshyp-labs'
-arch='noarch'
-license='GPL-3.0-or-later'
-depends='sshyp python3'
-source=\""$source"\"
-package() {
-    mkdir -p "\"\$pkgdir\""
-    cp -r "\"\$srcdir/usr/"\" "\"\$pkgdir\""
-}
-sha512sums=\"
-"$sha512'  'sshyp-mfa\"\$pkgver\".tar.xz"
-\"
-" > packages/APKBUILD
-    echo -e "\nAPKBUILD generated.\n"
+if [ "$1" == "generic" ]; then  # build scripts
+    _create_generic
+elif [ "$1" == "pkgbuild" ]; then
+    _create_generic
+    _create_pkgbuild
+elif [ "$1" == "apkbuild" ]; then
+    _create_generic
+    _create_apkbuild
+elif [ "$1" == "scripts" ]; then
+    _create_generic
+    _create_pkgbuild
+    _create_apkbuild
+elif [ "$1" == "haiku" ]; then  # distribution packages
+    _create_hpkg
+elif [ "$1" == "debian" ]; then
+    _create_deb
+elif [ "$1" == "termux" ]; then
+    _create_termux
+elif [ "$1" == "fedora" ]; then
+    _create_generic
+    _create_rpm
+elif [ "$1" == "freebsd" ]; then
+    _create_freebsd_pkg
+else
+    echo -e '\nusage: package.sh [target] <revision>\n\ntargets:\n mainline: pkgbuild apkbuild haiku fedora debian\n experimental: freebsd\ntermux\n coming soon: appimage(mainline) openbsd(mainline) macos(experimental)\n'
 fi
