@@ -23,6 +23,7 @@ _create_generic() {
 } &&
 
 _create_pkgbuild() {
+    source='https://github.com/rwinkhart/sshyp-labs/releases/download/v$pkgver/sshyp-mfa-$pkgver.tar.xz'
     echo -e '\ngenerating PKGBUILD...'
     echo "# Maintainer: Randall Winkhart <idgr at tutanota dot com>
 pkgname=sshyp-mfa
@@ -46,6 +47,7 @@ package() {
 } &&
 
 _create_apkbuild() {
+    source='https://github.com/rwinkhart/sshyp-labs/releases/download/v$pkgver/sshyp-mfa-$pkgver.tar.xz'
     echo -e '\ngenerating APKBUILD...'
     echo "# Maintainer: Randall Winkhart <idgr@tutanota.com>
 pkgname=sshyp-mfa
