@@ -9,9 +9,9 @@ fi
 
 _create_generic() {
     echo -e '\npackaging as generic...\n'
-    mkdir -p output/generictemp/usr/share/man/man1
-    cp -r bin output/generictemp/usr/
-    ln -s /usr/bin/sshyp-mfa.py output/generictemp/usr/bin/sshyp-mfa
+    mkdir -p output/generictemp/usr/{lib/sshyp,share/man/man1}
+    cp -r lib/. output/generictemp/usr/lib/sshyp/
+    ln -s /usr/lib/sshyp/sshyp-mfa.py output/generictemp/usr/bin/sshyp-mfa
     cp -r share output/generictemp/usr/
     cp extra/manpage output/generictemp/usr/share/man/man1/sshyp-mfa.1
     gzip output/generictemp/usr/share/man/man1/sshyp-mfa.1
@@ -73,7 +73,7 @@ sha512sums=\"
 
 _create_hpkg() {
     echo -e '\npackaging for Haiku...\n'
-    mkdir -p output/haikutemp/documentation/{man/man1,output/sshyp-mfa}
+    mkdir -p output/haikutemp/{bin,documentation/{man/man1,output/sshyp-mfa}}
     echo "name			sshypmfa
 version			"$version"-"$revision"
 architecture		any
@@ -99,15 +99,15 @@ urls {
 	\"https://github.com/rwinkhart/sshyp-labs\"
 }
 " > output/haikutemp/.PackageInfo
-    cp -r bin output/haikutemp/
-    sed -i '1 s/.*/#!\/bin\/env\ python3/' output/haikutemp/bin/sshyp-mfa.py
-    ln -s /bin/sshyp-mfa.py output/haikutemp/bin/sshyp-mfa
+    cp -r lib/. output/haikutemp/boot/system/lib/sshyp/
+    sed -i '1 s/.*/#!\/bin\/env\ python3/' output/haikutemp/boot/system/lib/sshyp/sshyp-mfa.py
+    ln -s /boot/system/lib/sshyp/sshyp-mfa.py output/haikutemp/bin/sshyp-mfa
     cp -r share/licenses/sshyp-mfa/ output/haikutemp/documentation/output/
     cp extra/manpage output/haikutemp/documentation/man/man1/sshyp-mfa.1
     gzip output/haikutemp/documentation/man/man1/sshyp-mfa.1
     cd output/haikutemp
     package create -b sshyp-mfa-"$version"-"$revision"_all.hpkg
-    package add sshyp-mfa-"$version"-"$revision"_all.hpkg bin documentation
+    package add sshyp-mfa-"$version"-"$revision"_all.hpkg bin boot documentation
     cd ../..
     mv output/haikutemp/sshyp-mfa-"$version"-"$revision"_all.hpkg output/
     rm -rf output/haikutemp
@@ -127,8 +127,8 @@ Depends: sshyp, python3
 Priority: optional
 Installed-Size: 100
 " > output/debiantemp/sshyp-mfa_"$version"-"$revision"_all/DEBIAN/control
-    cp -r bin output/debiantemp/sshyp-mfa_"$version"-"$revision"_all/usr/
-    ln -s /usr/bin/sshyp-mfa.py output/debiantemp/sshyp-mfa_"$version"-"$revision"_all/usr/bin/sshyp-mfa
+    cp -r lib/. output/debiantemp/sshyp-mfa_"$version"-"$revision"_all/usr/lib/sshyp/
+    ln -s /usr/lib/sshyp/sshyp-mfa.py output/debiantemp/sshyp-mfa_"$version"-"$revision"_all/usr/bin/sshyp-mfa
     cp -r share output/debiantemp/sshyp-mfa_"$version"-"$revision"_all/usr/
     cp extra/manpage output/debiantemp/sshyp-mfa_"$version"-"$revision"_all/usr/share/man/man1/sshyp-mfa.1
     gzip output/debiantemp/sshyp-mfa_"$version"-"$revision"_all/usr/share/man/man1/sshyp-mfa.1
@@ -151,8 +151,8 @@ Depends: sshyp, python3
 Priority: optional
 Installed-Size: 100
 " > output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/DEBIAN/control
-    cp -r bin output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/
-    ln -s /data/data/com.termux/files/usr/bin/sshyp-mfa.py output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/bin/sshyp-mfa
+    cp -r lib/. output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/lib/sshyp/
+    ln -s /data/data/com.termux/files/usr/lib/sshyp/sshyp-mfa.py output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/bin/sshyp-mfa
     cp -r share output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/
     cp extra/manpage output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/share/man/man1/sshyp-mfa.1
     gzip output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/share/man/man1/sshyp-mfa.1
@@ -188,7 +188,7 @@ cp -r %{_sourcedir}/usr %{buildroot}
 
 %files
 /usr/bin/sshyp-mfa
-/usr/bin/sshyp-mfa.py
+/usr/lib/sshyp/sshyp-mfa.py
 %license /usr/share/licenses/sshyp-mfa/license
 %doc /usr/share/man/man1/sshyp-mfa.1.gz
 " > ~/rpmbuild/SPECS/sshyp-mfa.spec
@@ -200,8 +200,7 @@ echo -e "\nFedora packaging complete\n"
 
 _create_freebsd_pkg() {
     echo -e '\npackaging for FreeBSD...\n'
-    mkdir -p output/FreeBSDtemp/bin
-    tar xf output/sshyp-mfa-"$version".tar.xz -C output/FreeBSDtemp
+    mkdir -p output/freebsdtemp/usr/{lib/sshyp,bin,share/man/man1}
     echo "name: sshyp-mfa
 version: \""$version"\"
 abi = \"FreeBSD:13:*\";
@@ -220,14 +219,19 @@ prefix: /
                       \"origin\" : \"lang/python\"
                    },
                 },
-" > output/FreeBSDtemp/+MANIFEST
+" > output/freebsdtemp/+MANIFEST
 echo "/usr/bin/sshyp-mfa
-/usr/bin/sshyp-mfa.py
+/usr/lib/sshyp/sshyp-mfa.py
 /usr/share/licenses/sshyp-mfa/license
 /usr/share/man/man1/sshyp-mfa.1.gz
-" > output/FreeBSDtemp/plist
-pkg create -m output/FreeBSDtemp/ -r output/FreeBSDtemp/ -p output/FreeBSDtemp/plist -o output/
-rm -rf output/FreeBSDtemp
+" > output/freebsdtemp/plist
+cp -r lib/. output/freebsdtemp/usr/lib/sshyp/
+ln -s /usr/lib/sshyp/sshyp-mfa.py output/freebsdtemp/usr/bin/sshyp-mfa
+cp -r share output/freebsdtemp/usr/
+cp extra/manpage output/freebsdtemp/usr/share/man/man1/sshyp-mfa.1
+gzip output/freebsdtemp/usr/share/man/man1/sshyp-mfa.1
+pkg create -m output/freebsdtemp/ -r output/freebsdtemp/ -p output/freebsdtemp/plist -o output/
+rm -rf output/freebsdtemp
 echo -e "\nFreeBSD packaging complete\n"
 } &&
 
