@@ -9,7 +9,7 @@ fi
 
 _create_generic() {
     echo -e '\npackaging as generic...\n'
-    mkdir -p output/generictemp/usr/{lib/sshyp,share/man/man1}
+    mkdir -p output/generictemp/usr/{bin,lib/sshyp,share/man/man1}
     cp -r lib/. output/generictemp/usr/lib/sshyp/
     ln -s /usr/lib/sshyp/sshyp-mfa.py output/generictemp/usr/bin/sshyp-mfa
     cp -r share output/generictemp/usr/
