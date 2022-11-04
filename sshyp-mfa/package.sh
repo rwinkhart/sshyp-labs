@@ -174,20 +174,15 @@ Version:        "$version"
 Release:        "$revision"
 Summary:        An MFA (TOTP/Steam) key generator for the sshyp password manager
 BuildArch:      noarch
-
 License:        GPL-3.0-only
 URL:            https://github.com/rwinkhart/sshyp-labs
 Source0:        sshyp-mfa-"$version".tar.xz
-
 Requires:       sshyp python
-
 %description
 sshyp-mfa is an extension for the sshyp password manager that reads MFA data from sshyp entries and generates generic TOTP and Steam keys.
-
 %install
 tar xf %{_sourcedir}/sshyp-mfa-"$version".tar.xz -C %{_sourcedir}
 cp -r %{_sourcedir}/usr %{buildroot}
-
 %files
 /usr/bin/sshyp-mfa
 /usr/lib/sshyp/sshyp-mfa.py
