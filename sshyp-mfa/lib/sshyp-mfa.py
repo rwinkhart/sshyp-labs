@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
 
 from base64 import b32decode
-from hmac import new as new_mac
 from os import environ, listdir, path, system, uname
 from pathlib import Path
-from shutil import rmtree
 from sshync import get_profile
 from sshyp import decrypt, entry_list_gen, shm_gen, whitelist_verify
-from struct import pack, unpack
 from sys import argv, exit as s_exit
 from time import sleep, strftime, time
 
 
 def totp(_secret, _algo, _digits, _period):  # uses provided information to generate a standard totp key
+    from hmac import new as new_mac
+    from struct import pack, unpack
     _secret = b32decode(_secret.upper() + '=' * ((8 - len(_secret)) % 8))
     _counter = pack('>Q', int(time() / _period))
     _mac = new_mac(_secret, _counter, _algo).digest()
@@ -22,6 +21,7 @@ def totp(_secret, _algo, _digits, _period):  # uses provided information to gene
 
 
 def mfa_read_shortcut():  # reads and extracts MFA info from the user-specified sshyp entry
+    from shutil import rmtree
     if not Path(f"{directory}{argument}.gpg").exists():
         print(f"\n\u001b[38;5;9merror: entry ({argument}) does not exist\u001b[0m\n")
         s_exit(1)
