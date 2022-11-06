@@ -67,7 +67,7 @@ package() {
 }
 
 sha512sums=\"
-"$sha512'  'sshyp-mfa\"\$pkgver\".tar.xz"
+"$sha512'  'sshyp-mfa-\"\$pkgver\".tar.xz"
 \"
 " > output/APKBUILD
     echo -e "\nAPKBUILD generated\n"
