@@ -117,7 +117,7 @@ urls {
 
 _create_deb() {
     echo -e '\npackaging for Debian/Ubuntu...\n'
-    mkdir -p output/debiantemp/sshyp-mfa_"$version"-"$revision"_all/{DEBIAN,usr/share/man/man1}
+    mkdir -p output/debiantemp/sshyp-mfa_"$version"-"$revision"_all/{DEBIAN,usr/{lib/sshyp,bin,share/man/man1}}
     echo "Package: sshyp-mfa
 Version: $version
 Section: utils
@@ -141,7 +141,7 @@ Installed-Size: 100
 
 _create_termux() {
     echo -e '\npackaging for Termux...\n'
-    mkdir -p output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/{data/data/com.termux/files/usr/share/man/man1,DEBIAN}
+    mkdir -p output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/{DEBIAN,data/data/com.termux/files/usr/{lib/sshyp,bin,share/man/man1}}
     echo "Package: sshyp-mfa
 Version: $version
 Section: utils
