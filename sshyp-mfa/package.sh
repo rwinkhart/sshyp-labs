@@ -75,7 +75,7 @@ sha512sums=\"
 
 _create_hpkg() {
     echo -e '\npackaging for Haiku...\n'
-    mkdir -p output/haikutemp/{bin,lib/sshyp,documentation/{man/man1,sshyp-mfa}}
+    mkdir -p output/haikutemp/{bin,lib/sshyp,documentation/{man/man1,packages/sshyp-mfa}}
     echo "name			sshypmfa
 version			"$version"-"$revision"
 architecture		any
@@ -103,7 +103,7 @@ urls {
     cp -r lib/. output/haikutemp/lib/sshyp/
     sed -i '1 s/.*/#!\/bin\/env\ python3.10/' output/haikutemp/lib/sshyp/sshyp-mfa.py
     ln -s /system/lib/sshyp/sshyp-mfa.py output/haikutemp/bin/sshyp-mfa
-    cp -r share/licenses/sshyp-mfa/ output/haikutemp/documentation/sshyp-mfa/
+    cp -r share/licenses/sshyp-mfa/. output/haikutemp/documentation/packages/sshyp-mfa/
     cp extra/manpage output/haikutemp/documentation/man/man1/sshyp-mfa.1
     gzip output/haikutemp/documentation/man/man1/sshyp-mfa.1
     cd output/haikutemp
