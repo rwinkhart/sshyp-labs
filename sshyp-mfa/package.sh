@@ -33,7 +33,7 @@ pkgdesc='An MFA (TOTP/Steam) key generator for the sshyp password manager'
 url='https://github.com/rwinkhart/sshyp-labs'
 arch=('any')
 license=('GPL-3.0-only')
-depends=(sshyp python)
+depends=(sshyp)
 source=(\""$source"\")
 sha512sums=('"$sha512"')
 
@@ -58,7 +58,7 @@ options=!check
 url='https://github.com/rwinkhart/sshyp-labs'
 arch='noarch'
 license='GPL-3.0-only'
-depends='sshyp python3'
+depends='sshyp'
 source=\""$source"\"
 
 package() {
@@ -75,7 +75,7 @@ sha512sums=\"
 
 _create_hpkg() {
     echo -e '\npackaging for Haiku...\n'
-    mkdir -p output/haikutemp/{bin,documentation/{man/man1,output/sshyp-mfa}}
+    mkdir -p output/haikutemp/{bin,lib/sshyp,documentation/{man/man1,sshyp-mfa}}
     echo "name			sshypmfa
 version			"$version"-"$revision"
 architecture		any
@@ -84,7 +84,7 @@ description		\"sshyp-mfa is an extension for the sshyp password manager that rea
 packager		\"Randall Winkhart <idgr at tutanota dot com>\"
 vendor			\"Randall Winkhart\"
 licenses {
-		\"GPL-3.0-only\"
+		\"GNU GPL v3\"
 }
 copyrights {
 	\"2021-2022 Randall Winkhart\"
@@ -95,21 +95,20 @@ provides {
 }
 requires {
 	sshyp
-	python3
 }
 urls {
 	\"https://github.com/rwinkhart/sshyp-labs\"
 }
 " > output/haikutemp/.PackageInfo
-    cp -r lib/. output/haikutemp/boot/system/lib/sshyp/
-    sed -i '1 s/.*/#!\/bin\/env\ python3/' output/haikutemp/boot/system/lib/sshyp/sshyp-mfa.py
-    ln -s /boot/system/lib/sshyp/sshyp-mfa.py output/haikutemp/bin/sshyp-mfa
-    cp -r share/licenses/sshyp-mfa/ output/haikutemp/documentation/output/
+    cp -r lib/. output/haikutemp/lib/sshyp/
+    sed -i '1 s/.*/#!\/bin\/env\ python3.10/' output/haikutemp/lib/sshyp/sshyp-mfa.py
+    ln -s /system/lib/sshyp/sshyp-mfa.py output/haikutemp/bin/sshyp-mfa
+    cp -r share/licenses/sshyp-mfa/ output/haikutemp/documentation/sshyp-mfa/
     cp extra/manpage output/haikutemp/documentation/man/man1/sshyp-mfa.1
     gzip output/haikutemp/documentation/man/man1/sshyp-mfa.1
     cd output/haikutemp
     package create -b sshyp-mfa-"$version"-"$revision"_all.hpkg
-    package add sshyp-mfa-"$version"-"$revision"_all.hpkg bin boot documentation
+    package add sshyp-mfa-"$version"-"$revision"_all.hpkg bin lib documentation
     cd ../..
     mv output/haikutemp/sshyp-mfa-"$version"-"$revision"_all.hpkg output/
     rm -rf output/haikutemp
@@ -125,7 +124,7 @@ Section: utils
 Architecture: all
 Maintainer: Randall Winkhart <idgr at tutanota dot com>
 Description: An MFA (TOTP/Steam) key generator for the sshyp password manager
-Depends: sshyp, python3
+Depends: sshyp
 Priority: optional
 Installed-Size: 100
 " > output/debiantemp/sshyp-mfa_"$version"-"$revision"_all/DEBIAN/control
@@ -149,7 +148,7 @@ Section: utils
 Architecture: all
 Maintainer: Randall Winkhart <idgr at tutanota dot com>
 Description: An MFA (TOTP/Steam) key generator for the sshyp password manager
-Depends: sshyp, python3
+Depends: sshyp
 Priority: optional
 Installed-Size: 100
 " > output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/DEBIAN/control
@@ -177,7 +176,7 @@ BuildArch:      noarch
 License:        GPL-3.0-only
 URL:            https://github.com/rwinkhart/sshyp-labs
 Source0:        sshyp-mfa-"$version".tar.xz
-Requires:       sshyp python
+Requires:       sshyp
 %description
 sshyp-mfa is an extension for the sshyp password manager that reads MFA data from sshyp entries and generates generic TOTP and Steam keys.
 %install
@@ -212,9 +211,6 @@ prefix: /
                    \"sshyp\" : {
                       \"origin\" : \"security/sshyp\"
                    },
-                   \"python\" : {
-                      \"origin\" : \"lang/python\"
-                   },
                 },
 " > output/freebsdtemp/+MANIFEST
 echo "/usr/bin/sshyp-mfa
@@ -240,10 +236,6 @@ elif [ "$1" == "pkgbuild" ]; then
 elif [ "$1" == "apkbuild" ]; then
     _create_generic
     _create_apkbuild
-elif [ "$1" == "scripts" ]; then
-    _create_generic
-    _create_pkgbuild
-    _create_apkbuild
 elif [ "$1" == "haiku" ]; then  # distribution packages
     _create_hpkg
 elif [ "$1" == "debian" ]; then
@@ -255,6 +247,17 @@ elif [ "$1" == "fedora" ]; then
     _create_rpm
 elif [ "$1" == "freebsd" ]; then
     _create_freebsd_pkg
+elif [ "$1" == "buildable-arch" ]; then
+    _create_generic
+    _create_pkgbuild
+    _create_apkbuild
+    if [[ $(pacman -Q dpkg) == "dpkg"* ]]; then
+        _create_deb
+        _create_termux
+    fi
+    if [[ "$(pacman -Q freebsd-pkg)" == "freebsd-pkg"* ]]; then
+        _create_freebsd_pkg
+    fi
 else
-    echo -e '\nusage: package.sh [target] <revision>\n\ntargets:\n mainline: pkgbuild apkbuild haiku fedora debian\n experimental: freebsd\ntermux\n coming soon: appimage(mainline) openbsd(mainline) macos(experimental)\n'
+    echo -e '\nusage: package.sh [target] <revision>\n\ntargets:\n mainline: pkgbuild apkbuild haiku fedora debian\n experimental: freebsd termux\n other: buildable-arch\n'
 fi
