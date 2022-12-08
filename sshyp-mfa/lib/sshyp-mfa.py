@@ -27,9 +27,9 @@ def mfa_read_shortcut():  # reads and extracts MFA info from the user-specified 
         s_exit(1)
     _shm_folder, _shm_entry = shm_gen()
     if quick_unlock_enabled == 'y':
-        decrypt(directory + argument, _shm_folder, _shm_entry, gpg, whitelist_verify(port, username_ssh, ip, device_id))
+        decrypt(directory + argument, _shm_folder, _shm_entry, whitelist_verify(port, username_ssh, ip, device_id))
     else:
-        decrypt(directory + argument, _shm_folder, _shm_entry, gpg, False)
+        decrypt(directory + argument, _shm_folder, _shm_entry, False)
     try:
         _mfa_data = open(f"{path.expanduser('~/.config/sshyp/tmp/')}{_shm_folder}/{_shm_entry}", 'r').readlines()
         _type = _mfa_data[4].split('otpauth://')[1].split('/')[0]
@@ -60,10 +60,6 @@ if __name__ == '__main__':
     ip = str(ssh_info[1].rstrip())
     port = str(ssh_info[2].rstrip())
     directory = str(ssh_info[3].rstrip())
-    if uname()[0] == 'Haiku':  # set proper gpg command for OS
-        gpg = 'gpg --pinentry-mode loopback'
-    else:
-        gpg = 'gpg'
 
     # main process: runs functions to generate MFA key, then continuously copies up-to-date MFA key to clipboard
     try:
