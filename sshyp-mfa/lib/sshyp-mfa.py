@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 
 from base64 import b32decode
-from os import environ, listdir, path, system, uname
+from os import environ, listdir, path, uname
 from pathlib import Path
 from sshync import get_profile
 from sshyp import decrypt, entry_list_gen, shm_gen, whitelist_verify
+from subprocess import PIPE, Popen, run
 from sys import argv, exit as s_exit
 from time import sleep, strftime, time
 
@@ -79,14 +80,14 @@ if __name__ == '__main__':
                     _mfa_key = steam_totp(b32decode(mfa_data[1]))
                 else:
                     _mfa_key = totp(mfa_data[1], mfa_data[2], mfa_data[3], mfa_data[4])
-                if uname()[0] == 'Haiku':  # Haiku clipboard detection
-                    system(f"clipboard -c '{_mfa_key}'")
+                if 'WAYLAND_DISPLAY' in environ:  # Wayland clipboard detection
+                    run(['wl-copy', _mfa_key])
+                elif uname()[0] == 'Haiku':  # Haiku clipboard detection
+                    run(['clipboard', '-c', _mfa_key])
                 elif Path("/data/data/com.termux").exists():  # Termux (Android) clipboard detection
-                    system(f"termux-clipboard-set '{_mfa_key}'")
-                elif environ.get('WAYLAND_DISPLAY') == 'wayland-0':  # Wayland clipboard detection
-                    system(f"wl-copy '{_mfa_key}'")
+                    run(['termux-clipboard-set', _mfa_key])
                 else:  # X11 clipboard detection
-                    system(f"echo -n '{_mfa_key}' | xclip -sel c")
+                    run(['xclip', '-sel', 'c'], stdin=Popen(['echo', '-n', _mfa_key], stdout=PIPE).stdout)
             sleep(1)
     except KeyboardInterrupt:
         print('\n')
