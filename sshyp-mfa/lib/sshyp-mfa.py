@@ -23,14 +23,14 @@ def totp(_secret, _algo, _digits, _period):  # uses provided information to gene
 
 def mfa_read_shortcut():  # reads and extracts MFA info from the user-specified sshyp entry
     from shutil import rmtree
-    if not Path(f"{directory}{argument}.gpg").exists():
-        print(f"\n\u001b[38;5;9merror: entry ({argument}) does not exist\u001b[0m\n")
+    if not Path(f"{directory}{arguments[0]}.gpg").exists():
+        print(f"\n\u001b[38;5;9merror: entry ({arguments[0]}) does not exist\u001b[0m\n")
         s_exit(1)
     _shm_folder, _shm_entry = shm_gen()
     if quick_unlock_enabled == 'y':
-        decrypt(directory + argument, _shm_folder, _shm_entry, whitelist_verify(port, username_ssh, ip, device_id))
+        decrypt(directory + arguments[0], _shm_folder, _shm_entry, whitelist_verify(port, username_ssh, ip, device_id))
     else:
-        decrypt(directory + argument, _shm_folder, _shm_entry, False)
+        decrypt(directory + arguments[0], _shm_folder, _shm_entry, False)
     try:
         _mfa_data = open(f"{path.expanduser('~/.config/sshyp/tmp/')}{_shm_folder}/{_shm_entry}", 'r').readlines()
         _type = _mfa_data[4].split('otpauth://')[1].split('/')[0]
@@ -41,15 +41,15 @@ def mfa_read_shortcut():  # reads and extracts MFA info from the user-specified 
         rmtree(f"{path.expanduser('~/.config/sshyp/tmp/')}{_shm_folder}")
         return _type, _secret, _algo, _digits, _period
     except IndexError:
-        print(f"\n\u001b[38;5;9merror: entry ({argument}) does not contain valid mfa data\u001b[0m\n")
+        print(f"\n\u001b[38;5;9merror: entry ({arguments[0]}) does not contain valid mfa data\u001b[0m\n")
         rmtree(f"{path.expanduser('~/.config/sshyp/tmp/')}{_shm_folder}")
         s_exit(1)
 
 
 if __name__ == '__main__':
     # argument fetcher
-    argument_list = argv
-    if not len(argv) == 1 and not argv[1].strip().startswith('/'):
+    arguments = argv[1:]
+    if len(arguments) > 0 and not arguments[0].startswith('/'):
         print(f"\n\u001b[38;5;9merror: invalid argument - run 'man sshyp-mfa' for usage information\u001b[0m\n")
         s_exit(1)
 
@@ -64,10 +64,9 @@ if __name__ == '__main__':
 
     # main process: runs functions to generate MFA key, then continuously copies up-to-date MFA key to clipboard
     try:
-        if len(argument_list) == 1:
+        if len(arguments) < 1:
             entry_list_gen()
-            argument_list.append(input('entry to read: '))
-        argument = ' '.join(argument_list[1:]).replace('/', '', 1)
+            arguments.append(input('entry to read: '))
         mfa_data, copied = mfa_read_shortcut(), None
         print('\nmfa key copied to clipboard\n\nuntil this process is closed, your clipboard will be automatically '
               'updated with the newest mfa key')
