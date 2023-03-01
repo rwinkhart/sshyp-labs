@@ -21,7 +21,7 @@ def totp(_secret, _algo, _digits, _period):  # uses provided information to gene
     return str(_binary)[-_digits:].zfill(_digits)
 
 
-def mfa_read_shortcut():  # reads and extracts MFA info from the user-specified sshyp entry
+def mfa_read_shortcut():  # extracts MFA info from the user-specified sshyp entry
     from shutil import rmtree
     if not Path(f"{directory}{arguments[0]}.gpg").exists():
         print(f"\n\u001b[38;5;9merror: entry ({arguments[0]}) does not exist\u001b[0m\n")
@@ -49,8 +49,8 @@ def mfa_read_shortcut():  # reads and extracts MFA info from the user-specified 
 if __name__ == '__main__':
     # argument fetcher
     arguments = argv[1:]
-    if len(arguments) > 0 and not arguments[0].startswith('/'):
-        print(f"\n\u001b[38;5;9merror: invalid argument - run 'man sshyp-mfa' for usage information\u001b[0m\n")
+    if len(arguments) < 1 or not arguments[0].startswith('/'):
+        print("\nsshyp-mfa extension usage: sshyp </entry name> copy -m\n\nrun 'man sshyp-mfa' for more information\n")
         s_exit(1)
 
     # user data fetcher
@@ -64,9 +64,6 @@ if __name__ == '__main__':
 
     # main process: runs functions to generate MFA key, then continuously copies up-to-date MFA key to clipboard
     try:
-        if len(arguments) < 1:
-            entry_list_gen()
-            arguments.append(input('entry to read: '))
         mfa_data, copied = mfa_read_shortcut(), None
         print('\nmfa key copied to clipboard\n\nuntil this process is closed, your clipboard will be automatically '
               'updated with the newest mfa key')

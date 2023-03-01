@@ -1,15 +1,15 @@
-.TH sshyp-mfa 1 "12 July 2022" "rolling" "sshyp-mfa man page"
+.TH sshyp-mfa 1 "01 March 2023" "v1.4.0.1" "sshyp-mfa man page"
 .SH NAME
 sshyp-mfa \- An MFA (TOTP/Steam) key generator for the sshyp password manager.
 .SH SYNOPSIS
-sshyp-mfa [/<entry name>]
+Extension Usage: sshyp </entry name> copy -m
+
+Direct Usage: sshyp-mfa </entry name>
 .SH DESCRIPTION
 sshyp-mfa is an extension for the sshyp password manager that reads MFA data from sshyp entries and generates generic TOTP and Steam keys.
 .SH EXAMPLES
-Viewing the entry database:
-    sshyp-mfa
-
 Generating and copying an MFA key for an existing entry saved as ~/.local/share/sshyp-mfa/development/github.gpg
+    sshyp /development/github copy -m
     sshyp-mfa /development/github
 
 .SH SETUP
