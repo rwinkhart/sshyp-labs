@@ -4,7 +4,7 @@ from base64 import b32decode
 from os import environ, listdir, path, uname
 from pathlib import Path
 from sshync import get_profile
-from sshyp import decrypt, entry_list_gen, shm_gen, whitelist_verify
+from sshyp import decrypt, shm_gen, whitelist_verify
 from subprocess import PIPE, Popen, run
 from sys import argv, exit as s_exit
 from time import sleep, strftime, time
