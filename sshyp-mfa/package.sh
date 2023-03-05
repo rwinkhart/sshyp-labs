@@ -185,6 +185,7 @@ cp -r %{_sourcedir}/usr %{buildroot}
 %files
 /usr/bin/sshyp-mfa
 /usr/lib/sshyp/sshyp-mfa.py
+/usr/lib/sshyp/extensions/sshyp-mfa
 %license /usr/share/licenses/sshyp-mfa/license
 %doc /usr/share/man/man1/sshyp-mfa.1.gz
 " > ~/rpmbuild/SPECS/sshyp-mfa.spec
@@ -215,6 +216,7 @@ prefix: /
 " > output/freebsdtemp/+MANIFEST
 echo "/usr/bin/sshyp-mfa
 /usr/lib/sshyp/sshyp-mfa.py
+/usr/lib/sshyp/extensions/sshyp-mfa
 /usr/share/licenses/sshyp-mfa/license
 /usr/share/man/man1/sshyp-mfa.1.gz
 " > output/freebsdtemp/plist
