@@ -1,4 +1,4 @@
-.TH sshyp-mfa 1 "01 March 2023" "v1.4.0.1" "sshyp-mfa man page"
+.TH sshyp-mfa 1 "04 March 2023" "v1.4.0.1" "sshyp-mfa man page"
 .SH NAME
 sshyp-mfa \- An MFA (TOTP/Steam) key generator for the sshyp password manager.
 .SH SYNOPSIS
