@@ -52,7 +52,7 @@ _create_apkbuild() {
     echo "# Maintainer: Randall Winkhart <idgr@tutanota.com>
 pkgname=sshyp-mfa
 pkgver="$version"
-pkgrel="$revision"
+pkgrel="$((revision-1))"
 pkgdesc='An MFA (TOTP/Steam) key generator for the sshyp password manager'
 options=!check
 url='https://github.com/rwinkhart/sshyp-labs'
