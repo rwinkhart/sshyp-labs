@@ -76,7 +76,9 @@ if __name__ == '__main__':
                     _mfa_key = steam_totp(b32decode(mfa_data[1]))
                 else:
                     _mfa_key = totp(mfa_data[1], mfa_data[2], mfa_data[3], mfa_data[4])
-                if 'WAYLAND_DISPLAY' in environ:  # Wayland clipboard detection
+                if 'WSL_DISTRO_NAME' in environ:  # WSL clipboard detection
+                        run(['powershell.exe', '-c', 'Set-Clipboard', _mfa_key])
+                elif 'WAYLAND_DISPLAY' in environ:  # Wayland clipboard detection
                     run(['wl-copy', _mfa_key])
                 elif uname()[0] == 'Haiku':  # Haiku clipboard detection
                     run(['clipboard', '-c', _mfa_key])
