@@ -17,15 +17,21 @@ _create_generic() {
     cp -r share output/generictemp/usr/
     cp extra/manpage output/generictemp/usr/share/man/man1/sshyp-mfa.1
     gzip output/generictemp/usr/share/man/man1/sshyp-mfa.1
-    XZ_OPT=-e6 tar -C output/generictemp -cvJf output/sshyp-mfa-"$version".tar.xz usr/
+    XZ_OPT=-e6 tar -C output/generictemp -cvJf output/GENERIC-sshyp-mfa-"$version".tar.xz usr/
     rm -rf output/generictemp
-    sha512="$(sha512sum output/sshyp-mfa-"$version".tar.xz | awk '{print $1;}')"
+    sha512="$(sha512sum output/GENERIC-sshyp-mfa-"$version".tar.xz | awk '{print $1;}')"
     printf '\ngeneric packaging complete\n\n'
 } &&
 
 _create_pkgbuild() {
-    local source='https://github.com/rwinkhart/sshyp-labs/releases/download/v$pkgver/sshyp-mfa-$pkgver.tar.xz'
     printf '\ngenerating PKGBUILD...\n'
+    if [ "$1" = 'Deb' ]; then
+        local source='https://github.com/rwinkhart/sshyp-labs/releases/download/v"$pkgver"/UBUNTU-sshyp-mfa_"$pkgver"-"$pkgrel"_all.deb'
+        local decomp_target='data.tar.xz'
+    else
+        local source='https://github.com/rwinkhart/sshyp-labs/releases/download/v"$pkgver"/GENERIC-sshyp-mfa-"$pkgver".tar.xz'
+        local decomp_target='GENERIC-sshyp-"$pkgver".tar.xz'
+    fi
     printf "# Maintainer: Randall Winkhart <idgr at tutanota dot com>
 pkgname=sshyp-mfa
 pkgver="$version"
@@ -40,7 +46,7 @@ sha512sums=('"$sha512"')
 
 package() {
 
-    tar xf sshyp-mfa-"\"\$pkgver\"".tar.xz -C "\"\${pkgdir}\""
+    tar -xf $decomp_target -C "\"\${pkgdir}\""
 
 }
 " > output/PKGBUILD
@@ -48,8 +54,19 @@ package() {
 } &&
 
 _create_apkbuild() {
-    local source='https://github.com/rwinkhart/sshyp-labs/releases/download/v$pkgver/sshyp-mfa-$pkgver.tar.xz'
     printf '\ngenerating APKBUILD...\n'
+    if [ "$1" = 'Deb' ]; then
+        local source="https://github.com/rwinkhart/sshyp-labs/releases/download/v\"\$pkgver\"/UBUNTU-sshyp-mfa_\"\$pkgver\"-"$revision"_all.deb"
+        local sumsname="UBUNTU-sshyp-mfa_\"\$pkgver\"-"$revision"_all.deb"
+        local processing='mkdir -p "$pkgdir"
+    7z x "$srcdir"/* -o"$srcdir"
+    tar -xf "$srcdir"/data.tar -C "$pkgdir"
+    else
+        local source='https://github.com/rwinkhart/sshyp-labs/releases/download/v"$pkgver"/GENERIC-sshyp-mfa-"$pkgver".tar.xz'
+        local sumsname='GENERIC-sshyp-"$pkgver".tar.xz'
+        local processing='mkdir -p "$pkgdir"
+    cp -r "$srcdir/usr/" "$pkgdir"'
+    fi
     printf "# Maintainer: Randall Winkhart <idgr@tutanota.com>
 pkgname=sshyp-mfa
 pkgver="$version"
@@ -63,12 +80,11 @@ depends='sshyp'
 source=\""$source"\"
 
 package() {
-    mkdir -p "\"\$pkgdir\""
-    cp -r "\"\$srcdir/usr/"\" "\"\$pkgdir\""
+    $processing
 }
 
 sha512sums=\"
-"$sha512'  'sshyp-mfa-\"\$pkgver\".tar.xz"
+"$sha512"  "$sumsname"
 \"
 " > output/APKBUILD
     printf '\nAPKBUILD generated\n\n'
@@ -111,10 +127,10 @@ urls {
     cp extra/manpage output/haikutemp/documentation/man/man1/sshyp-mfa.1
     gzip output/haikutemp/documentation/man/man1/sshyp-mfa.1
     cd output/haikutemp
-    package create -b sshyp-mfa-"$version"-"$revision"_all.hpkg
-    package add sshyp-mfa-"$version"-"$revision"_all.hpkg bin lib documentation
+    package create -b HAIKU-sshyp-mfa-"$version"-"$revision"_all.hpkg
+    package add HAIKU-sshyp-mfa-"$version"-"$revision"_all.hpkg bin lib documentation
     cd ../..
-    mv output/haikutemp/sshyp-mfa-"$version"-"$revision"_all.hpkg output/
+    mv output/haikutemp/HAIKU-sshyp-mfa-"$version"-"$revision"_all.hpkg output/
     rm -rf output/haikutemp
     printf "\nHaiku packaging complete\n\n"
 } &&
@@ -140,9 +156,10 @@ Installed-Size: 100
     cp -r share output/debiantemp/sshyp-mfa_"$version"-"$revision"_all/usr/
     cp extra/manpage output/debiantemp/sshyp-mfa_"$version"-"$revision"_all/usr/share/man/man1/sshyp-mfa.1
     gzip output/debiantemp/sshyp-mfa_"$version"-"$revision"_all/usr/share/man/man1/sshyp-mfa.1
-    dpkg-deb --build --root-owner-group output/debiantemp/sshyp-mfa_"$version"-"$revision"_all/
-    mv output/debiantemp/sshyp-mfa_"$version"-"$revision"_all.deb output/
+    dpkg-deb --build --root-owner-group -z6 -Sextreme -Zxz output/debiantemp/sshyp-mfa_"$version"-"$revision"_all/
+    mv output/debiantemp/sshyp-mfa_"$version"-"$revision"_all.deb output/UBUNTU-sshyp_"$version"-"$revision"_all.deb
     rm -rf output/debiantemp
+    sha512="$(sha512sum output/UBUNTU-sshyp-mfa_"$version"-"$revision"_all.deb | awk '{print $1;}')"
     printf '\nDebian/Ubuntu packaging complete\n\n'
 } &&
 
@@ -168,7 +185,7 @@ Installed-Size: 100
     cp extra/manpage output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/share/man/man1/sshyp-mfa.1
     gzip output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/share/man/man1/sshyp-mfa.1
     dpkg-deb --build --root-owner-group output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/
-    mv output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux.deb output/
+    mv output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux.deb output/TERMUX-sshyp_"$version"-"$revision"_all.deb
     rm -rf output/termuxtemp
     printf '\nTermux packaging complete\n\n'
 } &&
@@ -177,7 +194,11 @@ _create_rpm() {
     printf '\npackaging for Fedora...\n'
     rm -rf ~/rpmbuild
     rpmdev-setuptree
-    cp output/sshyp-mfa-"$version".tar.xz ~/rpmbuild/SOURCES
+    mkdir -p output/fedoratemp/usr/bin \
+             output/fedoratemp/usr/lib/sshyp/extensions \
+    mkdir -p output/fedoratemp/usr/bin \
+        output/fedoratemp/usr/lib/sshyp \
+        output/fedoratemp/usr/share/man/man1
     printf "Name:           sshyp-mfa
 Version:        "$version"
 Release:        "$revision"
@@ -185,22 +206,29 @@ Summary:        An MFA (TOTP/Steam) key generator for the sshyp password manager
 BuildArch:      noarch
 License:        GPL-3.0-only
 URL:            https://github.com/rwinkhart/sshyp-labs
-Source0:        sshyp-mfa-"$version".tar.xz
+Source0:        GENERIC-FEDORA-sshyp-mfa-"$version".tar.xz
 Requires:       sshyp
-%description
+%%description
 sshyp-mfa is an extension for the sshyp password manager that reads MFA data from sshyp entries and generates generic TOTP and Steam keys.
-%install
-tar xf %{_sourcedir}/sshyp-mfa-"$version".tar.xz -C %{_sourcedir}
-cp -r %{_sourcedir}/usr %{buildroot}
-%files
+%%install
+tar xf %%{_sourcedir}/GENERIC-FEDORA-sshyp-mfa-"$version".tar.xz -C %%{_sourcedir}
+cp -r %%{_sourcedir}/usr %%{buildroot}
+%%files
 /usr/bin/sshyp-mfa
 /usr/lib/sshyp/sshyp-mfa.py
 /usr/lib/sshyp/extensions/sshyp-mfa
-%license /usr/share/licenses/sshyp-mfa/license
-%doc /usr/share/man/man1/sshyp-mfa.1.gz
+%%license /usr/share/licenses/sshyp-mfa/license
+%%doc /usr/share/man/man1/sshyp-mfa.1.gz
 " > ~/rpmbuild/SPECS/sshyp-mfa.spec
+ln -s /usr/lib/sshyp/sshyp-mfa.py output/fedoratemp/usr/bin/sshyp-mfa
+cp -r share output/fedoratemp/usr/
+cp extra/manpage output/fedoratemp/usr/share/man/man1/sshyp-mfa.1
+gzip output/fedoratemp/usr/share/man/man1/sshyp-mfa.1
+XZ_OPT=-e6 tar -C output/fedoratemp -cvJf output/GENERIC-FEDORA-sshyp-mfa-"$version".tar.xz usr/
+rm -rf output/fedoratemp
+cp output/GENERIC-FEDORA-sshyp-mfa-"$version".tar.xz ~/rpmbuild/SOURCES
 rpmbuild -bb ~/rpmbuild/SPECS/sshyp-mfa.spec
-mv ~/rpmbuild/RPMS/noarch/* output/
+mv ~/rpmbuild/RPMS/noarch/sshyp-mfa-"$version"-"$revision".noarch.rpm output/FEDORA-sshyp-mfa-"$version"-"$revision".noarch.rpm
 rm -rf ~/rpmbuild
 printf '\nFedora packaging complete\n\n'
 } &&
@@ -238,21 +266,19 @@ cp -r share output/freebsdtemp/usr/
 cp extra/manpage output/freebsdtemp/usr/share/man/man1/sshyp-mfa.1
 gzip output/freebsdtemp/usr/share/man/man1/sshyp-mfa.1
 pkg create -m output/freebsdtemp/ -r output/freebsdtemp/ -p output/freebsdtemp/plist -o output/
+mv output/sshyp-mfa-"$version".pkg output/FREEBSD-sshyp-mfa-"$version"-"$revision".pkg
 rm -rf output/freebsdtemp
 printf '\nFreeBSD packaging complete\n\n'
 } &&
 
 case "$1" in
-    generic)
-        _create_generic
-        ;;
     pkgbuild)
-        _create_generic
-        _create_pkgbuild
+        _create_deb
+        _create_pkgbuild Deb
         ;;
     apkbuild)
-        _create_generic
-        _create_apkbuild
+        _create_deb
+        _create_apkbuild Deb
         ;;
     haiku)
         _create_hpkg
@@ -264,22 +290,15 @@ case "$1" in
         _create_termux
         ;;
     fedora)
-        _create_generic
         _create_rpm
         ;;
     freebsd)
         _create_freebsd_pkg
         ;;
     buildable-arch)
-        _create_generic
-        _create_pkgbuild
-        _create_apkbuild
-        case "$(pacman -Q dpkg)" in
-            dpkg*)
-            _create_deb
-            _create_termux
-            ;;
-        esac
+        _create_deb
+        _create_pkgbuild Deb
+        _create_apkbuild Deb
         case "$(pacman -Q freebsd-pkg)" in
             freebsd-pkg*)
             _create_freebsd_pkg
@@ -287,6 +306,6 @@ case "$1" in
         esac
         ;;
     *)
-    printf '\nusage: package.sh [target] <revision>\n\ntargets:\n mainline: pkgbuild apkbuild haiku fedora debian\n experimental: freebsd termux\n other: buildable-arch\n\n'
+    printf '\nusage: package.sh [target] <revision>\n\ntargets:\n mainline: pkgbuild apkbuild fedora debian haiku freebsd\n experimental: termux\n groups: buildable-arch\n\n'
     ;;
 esac
