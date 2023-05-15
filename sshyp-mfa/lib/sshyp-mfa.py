@@ -77,15 +77,15 @@ if __name__ == '__main__':
                 else:
                     _mfa_key = totp(mfa_data[1], mfa_data[2], mfa_data[3], mfa_data[4])
                 if 'WSL_DISTRO_NAME' in environ:  # WSL clipboard detection
-                        run(['powershell.exe', '-c', 'Set-Clipboard', _mfa_key])
+                        run(('powershell.exe', '-c', 'Set-Clipboard', _mfa_key))
                 elif 'WAYLAND_DISPLAY' in environ:  # Wayland clipboard detection
-                    run(['wl-copy', _mfa_key])
+                    run(('wl-copy', _mfa_key))
                 elif uname()[0] == 'Haiku':  # Haiku clipboard detection
-                    run(['clipboard', '-c', _mfa_key])
+                    run(('clipboard', '-c', _mfa_key))
                 elif Path("/data/data/com.termux").exists():  # Termux (Android) clipboard detection
-                    run(['termux-clipboard-set', _mfa_key])
+                    run(('termux-clipboard-set', _mfa_key))
                 else:  # X11 clipboard detection
-                    run(['xclip', '-sel', 'c'], stdin=Popen(['echo', '-n', _mfa_key], stdout=PIPE).stdout)
+                    run(('xclip', '-sel', 'c'), stdin=Popen(('echo', '-n', _mfa_key), stdout=PIPE).stdout)
             sleep(1)
     except KeyboardInterrupt:
         print('\n')
