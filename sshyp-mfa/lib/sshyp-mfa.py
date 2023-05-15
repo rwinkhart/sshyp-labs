@@ -87,7 +87,7 @@ if __name__ == '__main__':
                 elif Path("/data/data/com.termux").exists():  # Termux (Android) clipboard detection
                     run(('termux-clipboard-set', _mfa_key))
                 else:  # X11 clipboard detection
-                    run(('xclip', '-sel', 'c'), stdin=Popen(('echo', '-n', _mfa_key), stdout=PIPE).stdout)
+                    run(('xclip', '-sel', 'c'), stdin=Popen(('printf', _mfa_key), stdout=PIPE).stdout)
             sleep(1)
     except KeyboardInterrupt:
         print('\n')
