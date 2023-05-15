@@ -82,6 +82,8 @@ if __name__ == '__main__':
                     run(('wl-copy', _mfa_key))
                 elif uname()[0] == 'Haiku':  # Haiku clipboard detection
                     run(('clipboard', '-c', _mfa_key))
+                elif uname()[0] == 'Darwin':  # MacOS clipboard detection
+                    run(('pbcopy'), stdin=Popen(('printf', _mfa_key)), stdout=PIPE).stdout)
                 elif Path("/data/data/com.termux").exists():  # Termux (Android) clipboard detection
                     run(('termux-clipboard-set', _mfa_key))
                 else:  # X11 clipboard detection
