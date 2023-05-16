@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-
 from base64 import b32decode
+from configparser import ConfigParser
 from os import environ, listdir, path, uname
-from pathlib import Path
+from os.path import expanduser, isdir, isfile
 from sshync import get_profile
 from sshyp import decrypt, shm_gen, whitelist_verify
 from subprocess import PIPE, Popen, run
 from sys import argv, exit as s_exit
 from time import sleep, strftime, time
+home = expanduser("~")
 
 
 def totp(_secret, _algo, _digits, _period):  # uses provided information to generate a standard totp key
@@ -23,26 +24,26 @@ def totp(_secret, _algo, _digits, _period):  # uses provided information to gene
 
 def mfa_read_shortcut():  # extracts MFA info from the user-specified sshyp entry
     from shutil import rmtree
-    if not Path(f"{directory}{arguments[0]}.gpg").exists():
+    if not isfile(f"{directory}{arguments[0]}.gpg"):
         print(f"\n\u001b[38;5;9merror: entry ({arguments[0]}) does not exist\u001b[0m\n")
         s_exit(1)
     _shm_folder, _shm_entry = shm_gen()
-    if quick_unlock_enabled == 'y':
+    if quick_unlock_enabled == 'true':
         decrypt(directory + arguments[0], _shm_folder, _shm_entry, whitelist_verify(port, username_ssh, ip, device_id))
     else:
         decrypt(directory + arguments[0], _shm_folder, _shm_entry, False)
     try:
-        _mfa_data = open(f"{path.expanduser('~/.config/sshyp/tmp/')}{_shm_folder}/{_shm_entry}", 'r').readlines()
+        _mfa_data = open(f"{home}/.config/sshyp/tmp/{_shm_folder}/{_shm_entry}", 'r').readlines()
         _type = _mfa_data[4].split('otpauth://')[1].split('/')[0]
         _secret = _mfa_data[4].split('?secret=')[1].split('&issuer=')[0]
         _algo = _mfa_data[4].split('&algorithm=')[1].split('&digits=')[0]
         _digits = int(_mfa_data[4].split('&digits=')[1].split('&period=')[0])
         _period = int(_mfa_data[4].split('&period=')[1])
-        rmtree(f"{path.expanduser('~/.config/sshyp/tmp/')}{_shm_folder}")
+        rmtree(f"{home}/.config/sshyp/tmp/{_shm_folder}")
         return _type, _secret, _algo, _digits, _period
     except IndexError:
         print(f"\n\u001b[38;5;9merror: entry ({arguments[0]}) does not contain valid mfa data\u001b[0m\n")
-        rmtree(f"{path.expanduser('~/.config/sshyp/tmp/')}{_shm_folder}")
+        rmtree(f"{home}/.config/sshyp/tmp/{_shm_folder}")
         s_exit(1)
 
 
@@ -54,13 +55,14 @@ if __name__ == '__main__':
         s_exit(1)
 
     # user data fetcher
-    device_id = listdir(path.expanduser('~/.config/sshyp/devices'))[0]
-    quick_unlock_enabled = open(path.expanduser('~/.config/sshyp/sshyp-data')).readlines()[3].rstrip()
-    ssh_info = get_profile(path.expanduser('~/.config/sshyp/sshyp.sshync'))
-    username_ssh = str(ssh_info[0].rstrip())
-    ip = str(ssh_info[1].rstrip())
-    port = str(ssh_info[2].rstrip())
-    directory = str(ssh_info[3].rstrip())
+    sshyp_data = ConfigParser()
+    sshyp_data.read(f"{home}/.config/sshyp/sshyp.ini")
+    quick_unlock_enabled = sshyp_data.get('CLIENT-ONLINE', 'quick_unlock_enabled')
+    username_ssh = sshyp_data.get('SSHYNC', 'user')
+    ip = sshyp_data.get('SSHYNC', 'ip')
+    port = sshyp_data.get('SSHYNC', 'port')
+    directory = sshyp_data.get('SSHYNC', 'local_dir')
+    device_id = listdir(f"{home}/.config/sshyp/devices")[0]
 
     # main process: runs functions to generate MFA key, then continuously copies up-to-date MFA key to clipboard
     try:
@@ -83,8 +85,8 @@ if __name__ == '__main__':
                 elif uname()[0] == 'Haiku':  # Haiku clipboard detection
                     run(('clipboard', '-c', _mfa_key))
                 elif uname()[0] == 'Darwin':  # MacOS clipboard detection
-                    run(('pbcopy'), stdin=Popen(('printf', _mfa_key)), stdout=PIPE).stdout)
-                elif Path("/data/data/com.termux").exists():  # Termux (Android) clipboard detection
+                    run(('pbcopy'), stdin=Popen(('printf', _mfa_key)), stdout=PIPE).stdout
+                elif isdir("/data/data/com.termux"):  # Termux (Android) clipboard detection
                     run(('termux-clipboard-set', _mfa_key))
                 else:  # X11 clipboard detection
                     run(('xclip', '-sel', 'c'), stdin=Popen(('printf', _mfa_key), stdout=PIPE).stdout)
