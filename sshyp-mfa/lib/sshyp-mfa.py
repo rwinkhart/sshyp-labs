@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 from base64 import b32decode
 from configparser import ConfigParser
-from os import environ, listdir, path, uname
+from os import environ, listdir, uname
 from os.path import expanduser, isdir, isfile
-from sshync import get_profile
 from sshyp import decrypt, shm_gen, whitelist_verify
 from subprocess import PIPE, Popen, run
 from sys import argv, exit as s_exit
