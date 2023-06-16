@@ -28,9 +28,10 @@ def mfa_read_shortcut():  # extracts MFA info from the user-specified sshyp entr
         s_exit(1)
     _shm_folder, _shm_entry = shm_gen()
     if quick_unlock_enabled == 'true':
-        decrypt(directory + arguments[0], _shm_folder, _shm_entry, whitelist_verify(port, username_ssh, ip, device_id))
+        decrypt(directory + arguments[0], _shm_folder, _shm_entry,
+                _quick_pass=whitelist_verify(port, username_ssh, ip, device_id))
     else:
-        decrypt(directory + arguments[0], _shm_folder, _shm_entry, False)
+        decrypt(directory + arguments[0], _shm_folder, _shm_entry)
     try:
         _mfa_data = open(f"{home}/.config/sshyp/tmp/{_shm_folder}/{_shm_entry}", 'r').readlines()
         _type = _mfa_data[4].split('otpauth://')[1].split('/')[0]
