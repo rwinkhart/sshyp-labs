@@ -3,7 +3,7 @@ from base64 import b32decode
 from configparser import ConfigParser
 from os import environ, listdir, uname
 from os.path import expanduser, isdir, isfile
-from sshyp import decrypt, shm_gen, whitelist_verify
+from sshyp import decrypt, whitelist_verify
 from subprocess import PIPE, Popen, run
 from sys import argv, exit as s_exit
 from time import sleep, strftime, time
@@ -22,28 +22,22 @@ def totp(_secret, _algo, _digits, _period):  # uses provided information to gene
 
 
 def mfa_read_shortcut():  # extracts MFA info from the user-specified sshyp entry
-    from shutil import rmtree
     if not isfile(f"{directory}{arguments[0]}.gpg"):
         print(f"\n\u001b[38;5;9merror: entry ({arguments[0]}) does not exist\u001b[0m\n")
         s_exit(1)
-    _shm_folder, _shm_entry = shm_gen()
     if quick_unlock_enabled == 'true':
-        decrypt(directory + arguments[0], _shm_folder, _shm_entry,
-                _quick_pass=whitelist_verify(port, username_ssh, ip, device_id))
+        _mfa_data = decrypt(directory + arguments[0], _quick_pass=whitelist_verify(port, username_ssh, ip, device_id))
     else:
-        decrypt(directory + arguments[0], _shm_folder, _shm_entry)
+        _mfa_data = decrypt(directory + arguments[0])
     try:
-        _mfa_data = open(f"{home}/.config/sshyp/tmp/{_shm_folder}/{_shm_entry}", 'r').readlines()
         _type = _mfa_data[4].split('otpauth://')[1].split('/')[0]
         _secret = _mfa_data[4].split('?secret=')[1].split('&issuer=')[0]
         _algo = _mfa_data[4].split('&algorithm=')[1].split('&digits=')[0]
         _digits = int(_mfa_data[4].split('&digits=')[1].split('&period=')[0])
         _period = int(_mfa_data[4].split('&period=')[1])
-        rmtree(f"{home}/.config/sshyp/tmp/{_shm_folder}")
         return _type, _secret, _algo, _digits, _period
     except IndexError:
         print(f"\n\u001b[38;5;9merror: entry ({arguments[0]}) does not contain valid mfa data\u001b[0m\n")
-        rmtree(f"{home}/.config/sshyp/tmp/{_shm_folder}")
         s_exit(1)
 
 
