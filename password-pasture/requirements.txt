@@ -1,3 +1,0 @@
-arch: base-devel gtk4 cmake make gcc
-
-alpine: build-base gtk4.0 gtk4.0-dev cmake make gcc binutils abuild
