@@ -1,0 +1,3 @@
+[config]
+input = copy -m
+output = sshyp-mfa

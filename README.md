@@ -1,20 +1,17 @@
 # sshyp-labs
-Experimental extensions for the sshyp password manager.
+Extensions for the [sshyp password manager](https://github.com/rwinkhart/sshyp).
 
-sshyp-labs is currently the home of sshyp-mfa and  password-pasture (sshyp-gui).
+When new functionality is desired that goes outside of sshyp's primary goals or requires venturing outside of the Python standard library, said functionality is implemented as an extension.
+
+# Installation
+For sshyp v1.5.0+, sshyp extensions should be installed from the `sshyp tweak` menu's "extension management" option.
+
+**Do NOT use the packages from the releases page! These are only for older, unsupported releases of sshyp!**
 
 # Available Extensions
-sshyp-mfa - [installation and usage instructions](https://github.com/rwinkhart/sshyp-labs/wiki/sshyp-mfa)
+[sshyp-mfa](https://github.com/rwinkhart/sshyp-labs/wiki/sshyp-mfa): read mfa data from sshyp entries to generate and copy totp keys to the clipboard (optional Steam support)
 
-sshyp-mfa is a unique approach to generating multi-factor authentication keys. Upon running `sshyp </entry name> copy -m`,
-an MFA key will be generated and copied to your clipboard. sshyp-mfa will continue to run in the background and copy a
-new key to your clipboard every time the actively copied one expires. Never worry about a TOTP timer expiring again!
-At any time, sshyp-mfa can be closed with ctrl+c to stop this process.
-
-password-pasture - [installation and usage instructions](https://github.com/rwinkhart/sshyp-labs/wiki/password-pasture)
-
-password-pasture is an incredibly experimental GTK4 GUI interface for sshyp. It is currently not in a usable state
-and has not been updated since sshyp v1.1.X. Development is set to resume after sshyp is more feature-complete.
+[password-pasture](https://github.com/rwinkhart/sshyp-labs/wiki/password-pasture): a HIGHLY experimental GTK4 sshyp GUI - very incomplete (last updated for sshyp v1.1.x)
 
 # Acknowledgements
 sshyp-mfa relies on [ValvePython/steam](https://github.com/ValvePython/steam) for Steam support.
