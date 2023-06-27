@@ -1,4 +1,4 @@
 #!/bin/sh
-git add -f extra password-pasture sshyp-mfa LICENSE README.md version commit.sh .gitignore
+git add -f LICENSE README.md commit.sh extensions extra pointers 
 git commit -m "$1"
 git push
