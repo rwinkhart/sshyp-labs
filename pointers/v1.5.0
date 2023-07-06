@@ -1,5 +1,5 @@
 [sshyp-mfa]
 desc = read mfa data from sshyp entries to generate and copy totp keys to the clipboard (optional Steam support)
 usage = sshyp /<entry name> copy -m
-py = https://raw.githubusercontent.com/rwinkhart/sshyp-labs/v1.5.0.1/sshyp-mfa/sshyp-mfa.py
-ext = https://raw.githubusercontent.com/rwinkhart/sshyp-labs/v1.5.0.1/sshyp-mfa/sshyp-mfa.ext
+exe = https://raw.githubusercontent.com/rwinkhart/sshyp-labs/ext-manager/extensions/sshyp-mfa/sshyp-mfa.py
+ini = https://raw.githubusercontent.com/rwinkhart/sshyp-labs/ext-manager/extensions/sshyp-mfa/sshyp-mfa.ini
