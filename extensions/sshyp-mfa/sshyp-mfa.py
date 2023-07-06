@@ -68,8 +68,12 @@ if __name__ == '__main__':
                 if copied is None:
                     copied = 1
                 if mfa_data[0] == 'steam':
-                    from steam.guard import generate_twofactor_code as steam_totp
-                    _mfa_key = steam_totp(b32decode(mfa_data[1]))
+                    try:
+                        from steam.guard import generate_twofactor_code as steam_totp                                
+                        _mfa_key = steam_totp(b32decode(mfa_data[1]))
+                    except ModuleNotFoundError:
+                        print('\n\u001b[38;5;9merror: steam module not found\n\ninstall with "pip install -U \'steam[client]\'"\u001b[0m\n')
+                        s_exit(6)
                 else:
                     _mfa_key = totp(mfa_data[1], mfa_data[2], mfa_data[3], mfa_data[4])
                 if 'WSL_DISTRO_NAME' in environ:  # WSL clipboard detection
