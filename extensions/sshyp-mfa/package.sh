@@ -55,7 +55,7 @@ Section: utils
 Architecture: all
 Maintainer: Randall Winkhart <idgr at tutanota dot com>
 Description: An MFA (TOTP/Steam) key generator for the sshyp password manager
-Depends: sshyp
+Depends: sshyp-client
 Priority: optional
 Installed-Size: 100
 " > output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/DEBIAN/control
