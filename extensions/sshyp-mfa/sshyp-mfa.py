@@ -26,7 +26,10 @@ def mfa_read_shortcut():  # extracts MFA info from the user-specified sshyp entr
         print(f"\n\u001b[38;5;9merror: entry ({arguments[0]}) does not exist\u001b[0m\n")
         s_exit(1)
     if quick_unlock_enabled == 'true':
-        _mfa_data = decrypt(directory + arguments[0], _quick_pass=whitelist_verify(port, username_ssh, ip, device_id))
+        _mfa_data = decrypt(directory + arguments[0],
+                    _quick_pass=whitelist_verify(sshyp_data.get('SSHYNC', 'port'), 
+                                                 sshyp_data.get('SSHYNC', 'user'), sshyp_data.get('SSHYNC', 'ip'), 
+                                                 listdir(f"{home}/.config/sshyp/devices")[0]))
     else:
         _mfa_data = decrypt(directory + arguments[0])
     try:
@@ -51,12 +54,8 @@ if __name__ == '__main__':
     # user data fetcher
     sshyp_data = ConfigParser()
     sshyp_data.read(f"{home}/.config/sshyp/sshyp.ini")
+    directory = f"{home}/.local/share/sshyp/"
     quick_unlock_enabled = sshyp_data.get('CLIENT-ONLINE', 'quick_unlock_enabled')
-    username_ssh = sshyp_data.get('SSHYNC', 'user')
-    ip = sshyp_data.get('SSHYNC', 'ip')
-    port = sshyp_data.get('SSHYNC', 'port')
-    directory = sshyp_data.get('SSHYNC', 'local_dir')
-    device_id = listdir(f"{home}/.config/sshyp/devices")[0]
 
     # main process: runs functions to generate MFA key, then continuously copies up-to-date MFA key to clipboard
     try:
