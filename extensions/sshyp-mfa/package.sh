@@ -35,7 +35,7 @@ urls {
 " > output/haikutemp/.PackageInfo
     cp ./sshyp-mfa.py output/haikutemp/lib/sshyp/sshyp-mfa
     cp ./sshyp-mfa.ini output/haikutemp/lib/sshyp/extensions/
-    sed -i '1 s/.*/#!\/bin\/env\ python3.10/' output/haikutemp/lib/sshyp/sshyp-mfa.py
+    sed -i '1 s/.*/#!\/bin\/env\ python3.10/' output/haikutemp/lib/sshyp/sshyp-mfa
     cd output/haikutemp
     package create -b HAIKU-sshyp_mfa-"$version"-"$revision"_all.hpkg
     package add HAIKU-sshyp_mfa-"$version"-"$revision"_all.hpkg lib
