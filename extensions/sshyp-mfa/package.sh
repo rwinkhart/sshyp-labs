@@ -1,6 +1,6 @@
 #!/bin/sh
 
-version='v1.5.0.2'
+version='1.5.0.2'
 if [ -z "$2" ]; then
     revision=1
 else
