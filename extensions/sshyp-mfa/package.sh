@@ -62,7 +62,7 @@ Installed-Size: 100
     cp ./sshyp-mfa.py output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/lib/sshyp/sshyp-mfa
     cp ./sshyp-mfa.ini output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/lib/sshyp/extensions/
     dpkg-deb --build --root-owner-group output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/
-    mv output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux.deb output/TERMUX-sshyp_"$version"-"$revision"_all.deb
+    mv output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux.deb output/TERMUX-sshyp-mfa_"$version"-"$revision"_all.deb
     rm -rf output/termuxtemp
     printf '\nTermux packaging complete\n\n'
 } &&
