@@ -89,5 +89,4 @@ if __name__ == '__main__':
                     run(('xclip', '-sel', 'c'), stdin=Popen(('printf', _mfa_key), stdout=PIPE).stdout)
             sleep(1)
     except KeyboardInterrupt:
-        print('\n')
         s_exit(0)
