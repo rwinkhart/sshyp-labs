@@ -27,9 +27,11 @@ def mfa_read_shortcut():  # extracts MFA info from the user-specified sshyp entr
         s_exit(1)
     if quick_unlock_enabled == 'true':
         _mfa_data = decrypt(directory + arguments[0],
-                    _quick_pass=whitelist_verify(sshyp_data.get('SSHYNC', 'port'), 
-                                                 sshyp_data.get('SSHYNC', 'user'), sshyp_data.get('SSHYNC', 'ip'), 
-                                                 listdir(f"{home}/.config/sshyp/devices")[0]))
+                            _quick_pass=whitelist_verify(sshyp_data.get('SSHYNC', 'port'),
+                                                         sshyp_data.get('SSHYNC', 'user'),
+                                                         sshyp_data.get('SSHYNC', 'ip'),
+                                                         listdir(f"{home}/.config/sshyp/devices")[0],
+                                                         sshyp_data.get('SSHYNC', 'identity_file')))
     else:
         _mfa_data = decrypt(directory + arguments[0])
     try:
