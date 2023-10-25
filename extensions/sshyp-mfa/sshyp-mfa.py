@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 from base64 import b32decode
 from configparser import ConfigParser
+from hmac import new as hmac_new
 from os import environ, listdir, uname
 from os.path import expanduser, isdir, isfile
 from sshyp import decrypt, whitelist_verify
+from struct import pack, unpack
 from subprocess import PIPE, Popen, run
 from sys import argv, exit as s_exit
 from time import sleep, strftime, time
@@ -11,14 +13,24 @@ home = expanduser("~")
 
 
 def totp(_secret, _algo, _digits, _period):  # uses provided information to generate a standard totp key
-    from hmac import new as new_mac
-    from struct import pack, unpack
     _secret = b32decode(_secret.upper() + '=' * ((8 - len(_secret)) % 8))
     _counter = pack('>Q', int(time() / _period))
-    _mac = new_mac(_secret, _counter, _algo).digest()
-    _offset = _mac[-1] & 0x0f
-    _binary = unpack('>L', _mac[_offset:_offset + 4])[0] & 0x7fffffff
+    _hmac = hmac_new(_secret, _counter, _algo).digest()
+    _offset = _hmac[-1] & 0x0f
+    _binary = unpack('>L', _hmac[_offset:_offset + 4])[0] & 0x7fffffff
     return str(_binary)[-_digits:].zfill(_digits)
+
+
+def steam_otp(_secret):  # uses provided information to generate a Steam-compatible otp
+    _hmac = hmac_new(bytes(_secret), msg=pack('>Q', int(time()//30)), digestmod='sha1').digest()
+    _start = ord(_hmac[19:20]) & 0xF
+    _codeint = unpack('>I', _hmac[_start:_start+4])[0] & 0x7fffffff
+    _charset = '23456789BCDFGHJKMNPQRTVWXY'
+    _code = ''
+    for _ in range(5):
+        _codeint, _i = divmod(_codeint, len(_charset))
+        _code += _charset[_i]
+    return _code
 
 
 def mfa_read_shortcut():  # extracts MFA info from the user-specified sshyp entry
@@ -69,12 +81,7 @@ if __name__ == '__main__':
                 if copied is None:
                     copied = 1
                 if mfa_data[0] == 'steam':
-                    try:
-                        from steam.guard import generate_twofactor_code as steam_totp                                
-                        _mfa_key = steam_totp(b32decode(mfa_data[1]))
-                    except ModuleNotFoundError:
-                        print('\n\u001b[38;5;9merror: steam module not found\n\ninstall with "pip install -U \'steam[client]\'"\u001b[0m\n')
-                        s_exit(6)
+                    _mfa_key = steam_otp(b32decode(mfa_data[1]))
                 else:
                     _mfa_key = totp(mfa_data[1], mfa_data[2], mfa_data[3], mfa_data[4])
                 if 'WSL_DISTRO_NAME' in environ:  # WSL clipboard detection
