@@ -37,7 +37,7 @@ def mfa_read_shortcut():  # extracts MFA info from the user-specified sshyp entr
     if not isfile(f"{directory}{arguments[0]}.gpg"):
         print(f"\n\u001b[38;5;9merror: entry ({arguments[0]}) does not exist\u001b[0m\n")
         s_exit(1)
-    if quick_unlock_enabled == 'true':
+    if quick_unlock_enabled:
         _mfa_data = decrypt(directory + arguments[0],
                             _quick_pass=whitelist_verify(sshyp_data.get('SSHYNC', 'port'),
                                                          sshyp_data.get('SSHYNC', 'user'),
@@ -69,7 +69,7 @@ if __name__ == '__main__':
     sshyp_data = ConfigParser()
     sshyp_data.read(f"{home}/.config/sshyp/sshyp.ini")
     directory = f"{home}/.local/share/sshyp/"
-    quick_unlock_enabled = sshyp_data.get('CLIENT-ONLINE', 'quick_unlock_enabled')
+    quick_unlock_enabled = sshyp_data.getboolean('CLIENT-ONLINE', 'quick_unlock_enabled')
 
     # main process: runs functions to generate MFA key, then continuously copies up-to-date MFA key to clipboard
     try:
