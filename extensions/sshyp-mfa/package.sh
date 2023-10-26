@@ -34,8 +34,8 @@ urls {
 }
 " > output/haikutemp/.PackageInfo
     cp ./sshyp-mfa.py output/haikutemp/lib/sshyp/sshyp-mfa
-    cp ./sshyp-mfa.ini output/haikutemp/lib/sshyp/extensions/
-    sed -i '1 s/.*/#!\/bin\/env\ python3.10/' output/haikutemp/lib/sshyp/sshyp-mfa
+    printf '[config]\ninput = copy -m\noutput = /system/lib/sshyp/sshyp-mfa\n' > ./output/haikutemp/lib/sshyp/extensions/sshyp-mfa.ini
+    sed -i '1 s/.*/#!\/bin\/env\ python3.11/' output/haikutemp/lib/sshyp/sshyp-mfa
     cd output/haikutemp
     package create -b HAIKU-sshyp_mfa-"$version"-"$revision"_all.hpkg
     package add HAIKU-sshyp_mfa-"$version"-"$revision"_all.hpkg lib
@@ -60,7 +60,7 @@ Priority: optional
 Installed-Size: 100
 " > output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/DEBIAN/control
     cp ./sshyp-mfa.py output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/lib/sshyp/sshyp-mfa
-    cp ./sshyp-mfa.ini output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/lib/sshyp/extensions/
+    printf '[config]\ninput = copy -m\noutput = /data/data/com.termux/files/usr/lib/sshyp/sshyp-mfa\n' > ./output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/data/data/com.termux/files/usr/lib/sshyp/extensions/sshyp-mfa.ini
     dpkg-deb --build --root-owner-group output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux/
     mv output/termuxtemp/sshyp-mfa_"$version"-"$revision"_all_termux.deb output/TERMUX-sshyp-mfa_"$version"-"$revision"_all.deb
     rm -rf output/termuxtemp
