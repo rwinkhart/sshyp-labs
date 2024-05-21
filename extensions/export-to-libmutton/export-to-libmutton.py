@@ -2,17 +2,15 @@
 
 from os import path, remove, system, walk
 from pathlib import Path
-from shutil import move, rmtree
+from shutil import rmtree
+from sshyp import decrypt
 
-# NOTE LARGELY UNTESTED, ALPHA EXTENSION
-# TODO strip .gpg extension, if present
 # TODO extract and move MFA data to dedicated field, if present
 
 if __name__ == "__main__":
     _pasture = path.expanduser('~/.local/share/sshyp')
     
-    # set new gpg key; note that this changes sshyp's gpg key, not just libmutton's
-    gpg_config()
+    _gpg_id = input('\nWhat is the ID of the GPG key you would like to use for re-encryption?\n\nID: ')
 
     # remove previous export if it exists
     if Path(f"{_pasture}.export").exists():
@@ -20,21 +18,24 @@ if __name__ == "__main__":
 
     # prompt for unlock and display do not close warning
     decrypt(None)
-    curses_radio(['okay'], 'entry conversion may take some time (especially on slower devices)\n\nselect "okay" '
-                           'to start\n\ndo not terminate this process!')
+    print('entry conversion may take some time (especially on slower devices)\n\ndo not terminate this process!')
 
     # iterate over entires, exporting them in the libmutton format
     if path.isdir(_pasture):
-        _gpg_id = sshyp_data.get('CLIENT-GENERAL', 'gpg_id')
         for _dirPath, _dirNames, _filenames in walk(_pasture):
             for _filename in sorted(_filenames):
                 # ensure parent directory within export tree exists
-                Path(dirPath.replace(_pasture, _pasture + '.export')).mkdir(0o700, parents=True, exist_ok=True)
+                Path(_dirPath.replace(_pasture, _pasture + '.export')).mkdir(0o700, parents=True, exist_ok=True)
 
-                # manually decrypt due to potential lack of .gpg extension
-                system(f"gpg -d '{_dirPath}/{_filename}' > '{_dirPath.replace(_pasture, _pasture + '.export')}/{_filename}'")
+                # remove the .gpg file extension, if it is present
+                # prevents saving with the extension, as libmutton does not require it
+                if _filename.endswith('.gpg'):
+                    _filename = _filename[:-4]
 
-                _old_contents, _new_contents = open(f"{_dirPath.replace(_pasture, _pasture + '.export')}/{_filename}", 'r').readlines(), ''
+                # decrypt to export directory, append .gpg to decrypted file to differentiate from new file
+                system(f"gpg -d '{_dirPath}/{_filename}.gpg' > '{_dirPath.replace(_pasture, _pasture + '.export')}/{_filename}.gpg'")
+
+                _old_contents, _new_contents = open(f"{_dirPath.replace(_pasture, _pasture + '.export')}/{_filename}.gpg", 'r').readlines(), ''
 
                 # add a new line reserved for libmutton's TOTP support (between username and URL)
                 for _num in range(len(_old_contents)):
@@ -50,10 +51,17 @@ if __name__ == "__main__":
                         case _:
                             _new_contents += _old_contents[_num]
 
-                # write and manually encrypt the output file
-                open(f"{_dirPath.replace(_pasture, _pasture + '.export')}/{_filename}", 'w').writelines(_new_contents)
-                system(f"gpg -qr {str(_gpg_id)} -e '{_dirPath.replace(_pasture, _pasture + '.export')}/{_filename}'")
-                remove(f"{_dirPath.replace(_pasture, _pasture + '.export')}/{_filename}")
+                # remove any trailing whitespace
+                for _num in reversed(range(len(_new_contents))):
+                    if _new_contents[_num] in ('\n', '', ' '):
+                        _new_contents = _new_contents[:-1]
+                    else:
+                        break
+
+                # write and encrypt the output file
+                open(f"{_dirPath.replace(_pasture, _pasture + '.export')}/{_filename}.gpg", 'w').writelines(_new_contents)
+                system(f"gpg -er {str(_gpg_id)} -o '{_dirPath.replace(_pasture, _pasture + '.export')}/{_filename}' '{_dirPath.replace(_pasture, _pasture + '.export')}/{_filename}.gpg'")
+                remove(f"{_dirPath.replace(_pasture, _pasture + '.export')}/{_filename}.gpg")
     else:
         print(f"\n\u001b[38;5;9merror: no entry folder ({_pasture}) found\u001b[0m\n")
         s_exit(2)
