@@ -36,37 +36,34 @@ if __name__ == "__main__":
                 system(f"gpg -d '{_dirPath}/{_filename}{_og_extension}' > '{_dirPath.replace(_pasture, _pasture + '.export')}/{_filename}.gpg'")
 
                 _old_contents, _new_contents = open(f"{_dirPath.replace(_pasture, _pasture + '.export')}/{_filename}.gpg", 'r').readlines(), ''
-                _old_contents_length = len(_old_contents)
 
                 # extract sshyp-mfa data for new reserved line
-                if _old_contents_length >= 5:
+                _secret = '\n'
+                if len(_old_contents) >= 5:
                     if _old_contents[4].startswith('otpauth://'):
                         # check if sshyp-mfa data is standard TOTP or Steam
                         if _old_contents[4][10:].startswith('steam'):
                             print("\n\u001b[38;5;3mlibmutton uses a different form of secret key for Steam, and as such, your Steam TOTP secret must be migrated manually\u001b[0m\n")
-                            _secret = '\n'
                         else:
                             # extract TOTP secret
                             _secret = _old_contents[4].split('?secret=')[1].split('&issuer=')[0]+'\n'
-                    else:
-                        _secret = '\n'
 
-                # add a new line reserved for libmutton's TOTP support (between username and URL)
-                for _num in range(len(_old_contents)):
-                    if _num == 0:               
-                        _new_contents += _old_contents[0] 
-                    elif _num == 1:
-                        _new_contents += _old_contents[1]
-                    elif _num == 2:
-                        _new_contents += _secret
-                    elif _num == 3:
-                        _new_contents += _old_contents[2]
-                    elif _num == 4:
-                        # append as normal notes line if no sshyp-mfa data was found
-                        if _secret == '\n':
-                            _new_contents += _old_contents[_num]
-                    else:
-                        _new_contents += _old_contents[_num]
+                # temporarily expand _old_contents to avoid index errors (will be trimmed later)
+                while len(_old_contents) < 6:
+                    _old_contents.append('\n')
+
+                # extract any possible notes from _old_contents (as a string)
+                if _secret == '\n':
+                    _old_notes = ''.join(_old_contents[3:])
+                else:
+                    # skip second notes line if sshyp-mfa data was found
+                    # skip first notes line if blank line
+                    if _old_contents[3] in ('\n', ' '):
+                        _old_contents[3] = ''
+                    _old_notes = _old_contents[3] + ''.join(_old_contents[5:])
+
+                # set _new_contents
+                _new_contents = _old_contents[0] + _old_contents[1] + _secret + _old_contents[2] + _old_notes
 
                 # remove any trailing whitespace
                 for _num in reversed(range(len(_new_contents))):
