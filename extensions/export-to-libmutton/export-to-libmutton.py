@@ -27,11 +27,13 @@ if __name__ == "__main__":
 
                 # remove the .gpg file extension, if it is present
                 # prevents saving with the extension, as libmutton does not require it
+                _og_extension = ''
                 if _filename.endswith('.gpg'):
+                    _og_extension = '.gpg'
                     _filename = _filename[:-4]
 
                 # decrypt to export directory, append .gpg to decrypted file to differentiate from new file
-                system(f"gpg -d '{_dirPath}/{_filename}.gpg' > '{_dirPath.replace(_pasture, _pasture + '.export')}/{_filename}.gpg'")
+                system(f"gpg -d '{_dirPath}/{_filename}{_og_extension}' > '{_dirPath.replace(_pasture, _pasture + '.export')}/{_filename}.gpg'")
 
                 _old_contents, _new_contents = open(f"{_dirPath.replace(_pasture, _pasture + '.export')}/{_filename}.gpg", 'r').readlines(), ''
                 _old_contents_length = len(_old_contents)
@@ -41,7 +43,7 @@ if __name__ == "__main__":
                     if _old_contents[4].startswith('otpauth://'):
                         # check if sshyp-mfa data is standard TOTP or Steam
                         if _old_contents[4][10:].startswith('steam'):
-                            print("\n\u001b[38;5;3mlibmutton uses a different form of secret key for Steam, and as such, your Steam TOTP secret will not be migrated\u001b[0m\n")
+                            print("\n\u001b[38;5;3mlibmutton uses a different form of secret key for Steam, and as such, your Steam TOTP secret must be migrated manually\u001b[0m\n")
                             _secret = '\n'
                         else:
                             # extract TOTP secret
