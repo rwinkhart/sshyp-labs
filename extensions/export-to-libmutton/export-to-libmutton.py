@@ -18,7 +18,7 @@ if __name__ == "__main__":
 
     # prompt for unlock and display do not close warning
     decrypt(None)
-    print('entry conversion may take some time (especially on slower devices)\n\ndo not terminate this process!')
+    print('\nentry conversion may take some time (especially on slower devices)\ndo not terminate this process!\n')
 
     # iterate over entires, exporting them in the libmutton format
     if path.isdir(_pasture):
