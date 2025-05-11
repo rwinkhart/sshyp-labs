@@ -4,8 +4,8 @@ go 1.24.3
 
 require (
 	github.com/rwinkhart/go-boilerplate v0.0.0-20250509173525-20670ec7bb9c
-	github.com/rwinkhart/libmutton v0.3.2-0.20250509191408-fbfcdc53208d
-	github.com/rwinkhart/rcw v0.0.0-20250508234041-b49d9f1eea42
+	github.com/rwinkhart/libmutton v0.3.2-0.20250511191843-8860ce4969ec
+	github.com/rwinkhart/rcw v0.1.0
 )
 
 require (
@@ -15,7 +15,7 @@ require (
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/pkg/sftp v1.13.9 // indirect
 	github.com/pquerna/otp v1.4.1-0.20231130234153-3357de7c0481 // indirect
-	github.com/rwinkhart/peercred-mini v0.0.0-20250407033241-c09add2eceea // indirect
+	github.com/rwinkhart/peercred-mini v0.1.0 // indirect
 	golang.design/x/clipboard v0.7.0 // indirect
 	golang.org/x/crypto v0.38.0 // indirect
 	golang.org/x/exp/shiny v0.0.0-20250506013437-ce4c2cf36ca6 // indirect
@@ -25,3 +25,7 @@ require (
 	golang.org/x/term v0.32.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 )
+
+replace golang.org/x/sys => github.com/rwinkhart/sys-freebsd-13-xucred v0.33.0
+
+replace github.com/Microsoft/go-winio => github.com/rwinkhart/go-winio-easy-pipe-handles v0.0.0-20250407031321-96994a0e8410
