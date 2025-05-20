@@ -5,7 +5,7 @@ go 1.24.3
 require (
 	github.com/rwinkhart/go-boilerplate v0.0.0-20250509173525-20670ec7bb9c
 	github.com/rwinkhart/libmutton v0.3.2-0.20250511191843-8860ce4969ec
-	github.com/rwinkhart/rcw v0.1.0
+	github.com/rwinkhart/rcw v0.2.0
 )
 
 require (
@@ -14,7 +14,7 @@ require (
 	github.com/fortis/go-steam-totp v0.0.0-20171114202746-18e928674727 // indirect
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/pkg/sftp v1.13.9 // indirect
-	github.com/pquerna/otp v1.4.1-0.20231130234153-3357de7c0481 // indirect
+	github.com/pquerna/otp v1.5.0 // indirect
 	github.com/rwinkhart/peercred-mini v0.1.0 // indirect
 	golang.design/x/clipboard v0.7.0 // indirect
 	golang.org/x/crypto v0.38.0 // indirect
