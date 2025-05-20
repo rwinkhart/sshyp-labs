@@ -37,6 +37,7 @@ func main() {
 	}
 	var decLines []string
 	for _, entry := range entries {
+		entry = strings.TrimSuffix(entry, ".gpg")
 		decLines = decryptGPG(core.TargetLocationFormat(entry))
 		encBytes := wrappers.Encrypt([]byte(strings.Join(decLines, "\n")), rcwPassphrase)
 		err := os.WriteFile(outputDir+strings.ReplaceAll(entry, "/", core.PathSeparator), encBytes, 0600)
