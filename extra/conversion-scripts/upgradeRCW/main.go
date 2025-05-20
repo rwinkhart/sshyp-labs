@@ -6,19 +6,29 @@ import (
 	"os"
 	"strings"
 
+	oldwrap "github.com/rwinkhart/convertroman/wrappers"
+	newwrap "github.com/rwinkhart/rcw/wrappers"
+
 	"github.com/rwinkhart/go-boilerplate/back"
 	"github.com/rwinkhart/go-boilerplate/front"
 	"github.com/rwinkhart/libmutton/global"
 	"github.com/rwinkhart/libmutton/synccommon"
-	"github.com/rwinkhart/rcw/wrappers"
 )
 
 func main() {
 	// get info from user
-	var rcwPassphrase []byte
+	var oldRCWPassphrase, newRCWPassphrase []byte
 	for {
-		rcwPassphrase = front.InputHidden("RCW passphrase:")
-		if !bytes.Equal(rcwPassphrase, front.InputHidden("Confirm RCW passphrase:")) {
+		oldRCWPassphrase = front.InputHidden("RCW passphrase:")
+		if !bytes.Equal(oldRCWPassphrase, front.InputHidden("Confirm RCW passphrase:")) {
+			fmt.Println(back.AnsiError + "Passphrases do not match" + back.AnsiReset)
+			continue
+		}
+		break
+	}
+	for {
+		newRCWPassphrase = front.InputHidden("RCW passphrase:")
+		if !bytes.Equal(newRCWPassphrase, front.InputHidden("Confirm RCW passphrase:")) {
 			fmt.Println(back.AnsiError + "Passphrases do not match" + back.AnsiReset)
 			continue
 		}
@@ -26,7 +36,7 @@ func main() {
 	}
 
 	// convert the entries
-	fmt.Print("\nRe-encrypting entries. Please wait; do not force close this process.\n\nGPG may prompt you for a passphrase for decryption.\n\n")
+	fmt.Print("\nRe-encrypting entries. Please wait; do not force close this process.\n\n")
 	var outputDir = global.EntryRoot + "-new"
 	entries, folders := synccommon.WalkEntryDir()
 	for _, folder := range folders {
@@ -35,12 +45,17 @@ func main() {
 			back.PrintError("Failed to create directory: "+err.Error(), back.ErrorWrite, true)
 		}
 	}
-	var decLines []string
 	for _, entry := range entries {
-		entry = strings.TrimSuffix(entry, ".gpg")
-		decLines = decryptGPG(global.TargetLocationFormat(entry))
-		encBytes := wrappers.Encrypt([]byte(strings.Join(decLines, "\n")), rcwPassphrase)
-		err := os.WriteFile(outputDir+strings.ReplaceAll(entry, "/", global.PathSeparator), encBytes, 0600)
+		oldEncBytes, err := os.ReadFile(global.TargetLocationFormat(entry))
+		if err != nil {
+			back.PrintError("Failed to read file: "+err.Error(), back.ErrorRead, true)
+		}
+		decBytes, err := oldwrap.Decrypt(oldEncBytes, oldRCWPassphrase)
+		if err != nil {
+			back.PrintError("Failed to decrypt file: "+err.Error(), back.ErrorWrite, true)
+		}
+		newEncBytes := newwrap.Encrypt(decBytes, newRCWPassphrase)
+		err = os.WriteFile(outputDir+strings.ReplaceAll(entry, "/", global.PathSeparator), newEncBytes, 0600)
 		if err != nil {
 			back.PrintError("Failed to write to file: "+err.Error(), back.ErrorWrite, true)
 		}
