@@ -8,8 +8,8 @@ import (
 
 	"github.com/rwinkhart/go-boilerplate/back"
 	"github.com/rwinkhart/go-boilerplate/front"
-	"github.com/rwinkhart/libmutton/core"
-	"github.com/rwinkhart/libmutton/sync"
+	"github.com/rwinkhart/libmutton/global"
+	"github.com/rwinkhart/libmutton/synccommon"
 	"github.com/rwinkhart/rcw/wrappers"
 )
 
@@ -27,10 +27,10 @@ func main() {
 
 	// decrypt all GPG-encrypted entries to the output directory
 	fmt.Print("\nRe-encrypting entries. Please wait; do not force close this process.\n\nGPG may prompt you for a passphrase for decryption.\n\n")
-	var outputDir = core.EntryRoot + "-new"
-	entries, folders := sync.WalkEntryDir()
+	var outputDir = global.EntryRoot + "-new"
+	entries, folders := synccommon.WalkEntryDir()
 	for _, folder := range folders {
-		err := os.MkdirAll(outputDir+strings.ReplaceAll(folder, "/", core.PathSeparator), 0700)
+		err := os.MkdirAll(outputDir+strings.ReplaceAll(folder, "/", global.PathSeparator), 0700)
 		if err != nil {
 			back.PrintError("Failed to create directory: "+err.Error(), back.ErrorWrite, true)
 		}
@@ -38,20 +38,20 @@ func main() {
 	var decLines []string
 	for _, entry := range entries {
 		entry = strings.TrimSuffix(entry, ".gpg")
-		decLines = decryptGPG(core.TargetLocationFormat(entry))
+		decLines = decryptGPG(global.TargetLocationFormat(entry))
 		encBytes := wrappers.Encrypt([]byte(strings.Join(decLines, "\n")), rcwPassphrase)
-		err := os.WriteFile(outputDir+strings.ReplaceAll(entry, "/", core.PathSeparator), encBytes, 0600)
+		err := os.WriteFile(outputDir+strings.ReplaceAll(entry, "/", global.PathSeparator), encBytes, 0600)
 		if err != nil {
 			back.PrintError("Failed to write to file: "+err.Error(), back.ErrorWrite, true)
 		}
 	}
 
 	// swap the new directory with the old one
-	err := os.Rename(core.EntryRoot, core.EntryRoot+"-old")
+	err := os.Rename(global.EntryRoot, global.EntryRoot+"-old")
 	if err != nil {
 		back.PrintError("Failed to rename old directory: "+err.Error(), back.ErrorWrite, true)
 	}
-	err = os.Rename(outputDir, core.EntryRoot)
+	err = os.Rename(outputDir, global.EntryRoot)
 	if err != nil {
 		back.PrintError("Failed to rename new directory: "+err.Error(), back.ErrorWrite, true)
 	}
