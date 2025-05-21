@@ -19,16 +19,16 @@ func main() {
 	// get info from user
 	var oldRCWPassphrase, newRCWPassphrase []byte
 	for {
-		oldRCWPassphrase = front.InputHidden("RCW passphrase:")
-		if !bytes.Equal(oldRCWPassphrase, front.InputHidden("Confirm RCW passphrase:")) {
+		oldRCWPassphrase = front.InputHidden("Old RCW passphrase:")
+		if !bytes.Equal(oldRCWPassphrase, front.InputHidden("Confirm old RCW passphrase:")) {
 			fmt.Println(back.AnsiError + "Passphrases do not match" + back.AnsiReset)
 			continue
 		}
 		break
 	}
 	for {
-		newRCWPassphrase = front.InputHidden("RCW passphrase:")
-		if !bytes.Equal(newRCWPassphrase, front.InputHidden("Confirm RCW passphrase:")) {
+		newRCWPassphrase = front.InputHidden("New RCW passphrase:")
+		if !bytes.Equal(newRCWPassphrase, front.InputHidden("Confirm new RCW passphrase:")) {
 			fmt.Println(back.AnsiError + "Passphrases do not match" + back.AnsiReset)
 			continue
 		}
