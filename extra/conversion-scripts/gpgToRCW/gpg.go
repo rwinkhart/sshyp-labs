@@ -4,7 +4,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/rwinkhart/go-boilerplate/back"
+	"github.com/rwinkhart/go-boilerplate/other"
 	"github.com/rwinkhart/libmutton/global"
 )
 
@@ -13,7 +13,7 @@ func decryptGPG(targetLocation string) []string {
 	cmd := exec.Command("gpg", "--pinentry-mode", "loopback", "-q", "-d", targetLocation)
 	output, err := cmd.Output()
 	if err != nil {
-		back.PrintError("Failed to decrypt \""+targetLocation+"\" - Ensure it is a valid GPG-encrypted file and that you entered your passphrase correctly", global.ErrorDecryption, true)
+		other.PrintError("Failed to decrypt \""+targetLocation+"\" - Ensure it is a valid GPG-encrypted file and that you entered your passphrase correctly", global.ErrorDecryption)
 	}
 	return strings.Split(string(output), "\n")
 }
