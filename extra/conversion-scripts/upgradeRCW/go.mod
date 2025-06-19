@@ -1,16 +1,16 @@
 module upgradeRCW
 
-go 1.24.3
+go 1.24.4
 
 require (
 	github.com/rwinkhart/convertroman v0.2.0 // DECOY TO TRICK GO INTO USING TWO VERSIONS OF RCW
-	github.com/rwinkhart/go-boilerplate v0.0.0-20250509173525-20670ec7bb9c
-	github.com/rwinkhart/libmutton v0.3.2-0.20250520161453-e64da70edb84
-	github.com/rwinkhart/rcw v0.2.0
+	github.com/rwinkhart/go-boilerplate v0.1.0
+	github.com/rwinkhart/libmutton v0.3.2-0.20250619221323-1c0671354862
+	github.com/rwinkhart/rcw v0.2.1
 )
 
 require (
-	golang.org/x/crypto v0.38.0 // indirect
+	golang.org/x/crypto v0.39.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/term v0.32.0 // indirect
 )
