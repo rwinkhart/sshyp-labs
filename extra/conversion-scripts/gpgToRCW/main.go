@@ -18,8 +18,8 @@ func main() {
 	// get info from user
 	var rcwPassphrase []byte
 	for {
-		rcwPassphrase = front.InputHidden("RCW passphrase:")
-		if !bytes.Equal(rcwPassphrase, front.InputHidden("Confirm RCW passphrase:")) {
+		rcwPassphrase = front.InputSecret("RCW passphrase:")
+		if !bytes.Equal(rcwPassphrase, front.InputSecret("Confirm RCW passphrase:")) {
 			fmt.Println(back.AnsiError + "Passphrases do not match" + back.AnsiReset)
 			continue
 		}
@@ -42,8 +42,8 @@ func main() {
 	var decLines []string
 	for _, entry := range entries {
 		entry = strings.TrimSuffix(entry, ".gpg")
-		decLines = decryptGPG(global.TargetLocationFormat(entry))
-		encBytes := wrappers.Encrypt([]byte(strings.Join(decLines, "\n")), rcwPassphrase)
+		decLines = decryptGPG(global.GetRealPath(entry))
+		encBytes := wrappers.Encrypt([]byte(strings.Join(decLines, "\n")), rcwPassphrase, true, false)
 		err := os.WriteFile(outputDir+strings.ReplaceAll(entry, "/", global.PathSeparator), encBytes, 0600)
 		if err != nil {
 			other.PrintError("Failed to write to file: "+err.Error(), back.ErrorWrite)

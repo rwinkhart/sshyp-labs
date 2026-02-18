@@ -20,16 +20,16 @@ func main() {
 	// get info from user
 	var oldRCWPassphrase, newRCWPassphrase []byte
 	for {
-		oldRCWPassphrase = front.InputHidden("Old RCW passphrase:")
-		if !bytes.Equal(oldRCWPassphrase, front.InputHidden("Confirm old RCW passphrase:")) {
+		oldRCWPassphrase = front.InputSecret("Old RCW passphrase:")
+		if !bytes.Equal(oldRCWPassphrase, front.InputSecret("Confirm old RCW passphrase:")) {
 			fmt.Println(back.AnsiError + "Passphrases do not match" + back.AnsiReset)
 			continue
 		}
 		break
 	}
 	for {
-		newRCWPassphrase = front.InputHidden("New RCW passphrase:")
-		if !bytes.Equal(newRCWPassphrase, front.InputHidden("Confirm new RCW passphrase:")) {
+		newRCWPassphrase = front.InputSecret("New RCW passphrase:")
+		if !bytes.Equal(newRCWPassphrase, front.InputSecret("Confirm new RCW passphrase:")) {
 			fmt.Println(back.AnsiError + "Passphrases do not match" + back.AnsiReset)
 			continue
 		}
@@ -50,7 +50,7 @@ func main() {
 		}
 	}
 	for _, entry := range entries {
-		oldEncBytes, err := os.ReadFile(global.TargetLocationFormat(entry))
+		oldEncBytes, err := os.ReadFile(global.GetRealPath(entry))
 		if err != nil {
 			other.PrintError("Failed to read file: "+err.Error(), back.ErrorRead)
 		}
@@ -58,7 +58,7 @@ func main() {
 		if err != nil {
 			other.PrintError("Failed to decrypt file: "+err.Error(), back.ErrorWrite)
 		}
-		newEncBytes := newwrap.Encrypt(decBytes, newRCWPassphrase)
+		newEncBytes := newwrap.Encrypt(decBytes, newRCWPassphrase, true, false)
 		err = os.WriteFile(outputDir+strings.ReplaceAll(entry, "/", global.PathSeparator), newEncBytes, 0600)
 		if err != nil {
 			other.PrintError("Failed to write to file: "+err.Error(), back.ErrorWrite)
